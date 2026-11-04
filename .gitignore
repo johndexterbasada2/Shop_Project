@@ -1,0 +1,8 @@
+*.exe
+*.o
+*.out
+*.zip
+*.pdb
+err.txt
+build/
+.vscode/

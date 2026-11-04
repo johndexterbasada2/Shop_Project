@@ -1,9 +1,9 @@
-# BlitzShop
+# eShop_Project : BlitzShop
 
 A console-based **Brand-Affiliated E-Commerce Inventory & Search System** written in C++.
-It simulates a GameStop-themed store of gaming products (PlayStation, Xbox, Nintendo, Pokémon, Fortnite, Roblox) and demonstrates core **Data Structures and Algorithms** concepts through a menu-driven interface, with each partner brand displayed in its own console color.
+It simulates a small gaming-products store (PlayStation, Xbox, Nintendo, Pokémon, Fortnite, Roblox) and demonstrates core **Data Structures and Algorithms** concepts through a menu-driven interface, with each brand displayed in its own console color.
 
-> Final laboratory capstone for CS201 – Data Structures and Algorithm Analysis. It combines the data structures and algorithms from **Labs 1 to 8** into one application.
+> Built for CS201 – Data Structures and Algorithms.
 
 ---
 
@@ -55,7 +55,7 @@ The terminal output uses native `<windows.h>` console colors based on each produ
 The program is split into small modules, one per lab, so each part can be read, tested, and debugged on its own. Every module has a `.h` (declarations) and a `.cpp` (implementation); `main.cpp` connects them all.
 
 ```
-Shop_Project/
+BlitzShop/
 ├── BlitzShop/
 │   ├── main.cpp                   # Entry point: menu loop that wires all modules together
 │   ├── models.h                   # All structs (Product, CartNode, BrandNode, StackNode, QueueNode, BSTNode)

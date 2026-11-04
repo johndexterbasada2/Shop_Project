@@ -1,6 +1,3 @@
-// BlitzShop - Brand-Affiliated E-Commerce Inventory & Search System
-// main.cpp: program entry point. Wires all modules together via the menu.
-
 #include <iostream>
 #include <string>
 
@@ -30,7 +27,7 @@ int main() {
     int choice = 0;
     while (choice != 10) {
         cout << "\n======================================================================\n";
-        cout << "🛒 BRAND-AFFILIATED E-COMMERCE INVENTORY & SEARCH SYSTEM (CS201)\n";
+        cout << "BRAND-AFFILIATED E-COMMERCE INVENTORY & SEARCH SYSTEM (CS201)\n";
         cout << "======================================================================\n";
         cout << "1. View Complete Catalog (Tabular View with Brand Affiliations)\n";
         cout << "2. Filter Products by Official Brand (e.g., Sony, Nintendo, Microsoft)\n";
