@@ -64,9 +64,9 @@ int main() {
         } 
         else if (choice == 4) {
             double minP, maxP;
-            cout << "Enter minimum price: ";
+            cout << "Enter minimum price (PHP): ";
             cin >> minP;
-            cout << "Enter maximum price: ";
+            cout << "Enter maximum price (PHP): ";
             cin >> maxP;
             binarySearchPriceFilter(catalog, catalogSize, minP, maxP);
         } 

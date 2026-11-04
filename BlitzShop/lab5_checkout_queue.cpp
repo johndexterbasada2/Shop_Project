@@ -3,6 +3,7 @@
 #include "globals.h"
 #include "console_color.h"
 #include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -46,6 +47,6 @@ void processCheckoutQueue() {
         delete curr;
         curr = nextCart;
     }
-    cout << "Order Complete. Grand Total: $" << grandTotal << "\n";
+    cout << "Order Complete. Grand Total: PHP " << fixed << setprecision(2) << grandTotal << "\n";
     delete temp;
 }

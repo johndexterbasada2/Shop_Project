@@ -4,6 +4,7 @@
 #include "lab4_undo_stack.h"
 #include "console_color.h"
 #include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -41,11 +42,11 @@ void displayCart() {
         setBrandColor(curr->product->brand);
         cout << curr->product->name;
         resetColor();
-        cout << " | $" << curr->product->price << "\n";
+        cout << " | PHP " << fixed << setprecision(2) << curr->product->price << "\n";
         total += curr->product->price;
         curr = curr->next;
     }
-    cout << "Total: $" << total << "\n";
+    cout << "Total: PHP " << fixed << setprecision(2) << total << "\n";
 }
 
 // Menu option 7 (moved out of main.cpp, logic unchanged)

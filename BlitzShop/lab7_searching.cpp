@@ -34,7 +34,7 @@ void binarySearchPriceFilter(Product* catalog, int size, double minPrice, double
         }
     }
     
-    cout << "\n--- Products between $" << minPrice << " and $" << maxPrice << " ---\n";
+    cout << "\n--- Products between PHP " << minPrice << " and PHP " << maxPrice << " ---\n";
     if (startIdx != -1) {
         for (int i = startIdx; i < size && tempCatalog[i].price <= maxPrice; i++) {
             displayProduct(&tempCatalog[i]);
