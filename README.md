@@ -1,157 +1,107 @@
-# eShop_Project : BlitzShop
+# BlitzShop
 
-A console-based **Brand-Affiliated E-Commerce Inventory & Search System** written in C++.
-It simulates a small gaming-products store (PlayStation, Xbox, Nintendo, Pokémon, Fortnite, Roblox) and demonstrates core **Data Structures and Algorithms** concepts through a menu-driven interface, with each brand displayed in its own console color.
+**Brand-Affiliated E-Commerce Inventory & Search Engine System**
+A console-based C++ program (CS201 Data Structures & Algorithms final output) that simulates a gaming-products store. Every feature is built on a data structure or algorithm from Labs 1–8.
 
-> Built for CS201 – Data Structures and Algorithms.
+**Author:** John Dexter Basada, BSCPE 3A
 
 ---
 
 ## Features
 
-| # | Menu Option | Data Structure / Algorithm | Lab |
-|---|-------------|----------------------------|-----|
-| 1 | View complete catalog (tabular, color-coded by brand) | Dynamic array | Lab 1 |
-| 2 | Filter products by official brand | Linear scan | – |
-| 3 | Search products by keyword | Linear search | Lab 7 |
-| 4 | Filter products by price range | Quick sort + binary search | Lab 7, 8 |
-| 5 | Add item to shopping cart (lookup by product ID) | Binary search tree + doubly linked list | Lab 6, 2 |
-| 6 | Process customer checkout queue | Queue (FIFO) | Lab 5 |
-| 7 | Admin undo (removes last cart addition) | Stack (LIFO) | Lab 4 |
-| 8 | Partner brand banner showcase | Circular linked list | Lab 3 |
-| 9 | Sort inventory by price, stock, or brand | Quick sort / Insertion sort | Lab 8 |
-| 10 | Exit | – | – |
+- Browse the full product catalog in a color-coded table (each brand has its own color)
+- Filter products by brand, search by keyword, and filter by price range
+- Add items to a shopping cart, and undo the last addition
+- **Live stock tracking:** adding an item to the cart reduces its stock in the catalog right away, and **Undo returns the stock**
+- Checkout queue that processes orders in first-come, first-served order
+- Sort the inventory by price, stock, or brand
+- **Input validation:** wrong input never crashes or exits the program. It shows an error and asks the same question again
 
-### Brand color themes
+## Data Structures & Algorithms Used
 
-The terminal output uses native `<windows.h>` console colors based on each product's brand:
+| Lab | File | Concept | Used for |
+|---|---|---|---|
+| 1 | `lab1_catalog` | Dynamic memory allocation | Product catalog (10 products) |
+| 2 | `lab2_cart` | Doubly linked list | Shopping cart |
+| 3 | `lab3_brand_banner` | Circular linked list | Partner brand banner |
+| 4 | `lab4_undo_stack` | Stack (LIFO) | Undo last cart action |
+| 5 | `lab5_checkout_queue` | Queue (FIFO) | Checkout order line |
+| 6 | `lab6_bst` | Binary search tree | Product lookup by ID |
+| 7 | `lab7_searching` | Linear & binary search | Keyword search, price range filter |
+| 8 | `lab8_sorting` | Quick sort & insertion sort | Sort by price, stock, brand |
 
-| Brand | Color |
-|-------|-------|
-| Sony (PlayStation) | Blue |
-| Microsoft (Xbox) | Green |
-| Nintendo | Red |
-| The Pokemon Company | Yellow |
-| Epic Games (Fortnite) | Cyan |
-| Roblox Corporation | Default console text |
+Other files: `models.h` (structs), `globals.h/.cpp` (shared pointers), `display.h/.cpp` (table output), `console_color.h/.cpp` (brand colors), `input_utils.h` (safe input functions).
 
-### Complexity overview
+## Menu
 
-| Operation | Algorithm | Time |
-|-----------|-----------|------|
-| Product lookup by ID | BST search | O(log n) average, O(n) worst |
-| Keyword search | Linear search | O(n) |
-| Price range filter | Copy + quick sort, then binary search | O(n log n) average |
-| Sort by price / stock | Quick sort | O(n log n) average, O(n²) worst |
-| Sort by brand | Insertion sort | O(n²) |
-| Add to cart | Doubly linked list tail insert | O(1) |
-| Undo | Stack push / pop | O(1) |
-| Enqueue / dequeue checkout | Linked-list queue | O(1) |
+| # | Option | Notes |
+|---|---|---|
+| 1 | View Complete Catalog | Shows current stock |
+| 2 | Filter by Brand | Not case-sensitive (`sony` works) |
+| 3 | Search by Keyword | Linear search, spaces allowed |
+| 4 | Filter by Price Range | Binary search, max must be at least min |
+| 5 | Add Item to Cart | Enter Product ID (101–110), `0` to cancel |
+| 6 | Process Checkout Queue | Completes the order and shows the total |
+| 7 | Undo | Removes the last cart item and restores its stock |
+| 8 | Brand Banner | Shows partner brands |
+| 9 | Sort Inventory Display | Price, stock, or brand (display only) |
+| 10 | Exit | |
 
----
+## How the Stock Works
 
-## Project Structure
+1. **Add to cart:** stock goes down by 1 immediately (shown in the catalog table).
+2. **Undo:** the item is removed from the cart and the stock goes back up by 1.
+3. **Checkout:** the order is final, so stock is not reduced again and the undo history is cleared (finished orders cannot be undone).
+4. An item with 0 stock cannot be added to the cart.
 
-The program is split into small modules, one per lab, so each part can be read, tested, and debugged on its own. Every module has a `.h` (declarations) and a `.cpp` (implementation); `main.cpp` connects them all.
+## Input Validation
 
-```
-BlitzShop/
-├── BlitzShop/
-│   ├── main.cpp                   # Entry point: menu loop that wires all modules together
-│   ├── models.h                   # All structs (Product, CartNode, BrandNode, StackNode, QueueNode, BSTNode)
-│   ├── globals.h / .cpp           # Shared list/stack/queue/BST head pointers
-│   ├── console_color.h / .cpp     # setBrandColor, resetColor (Windows console colors)
-│   ├── display.h / .cpp           # displayProduct, displayCatalog
-│   ├── lab1_catalog.h / .cpp      # Lab 1 - Dynamic allocation: createCatalog
-│   ├── lab2_cart.h / .cpp         # Lab 2 - Doubly linked list: addToCart, displayCart, undoLastAction
-│   ├── lab3_brand_banner.h / .cpp # Lab 3 - Circular linked list: initBrandBanner, showBrandBanner
-│   ├── lab4_undo_stack.h / .cpp   # Lab 4 - Stack (LIFO): pushUndo, popUndo
-│   ├── lab5_checkout_queue.h/.cpp # Lab 5 - Queue (FIFO): enqueueCheckout, processCheckoutQueue
-│   ├── lab6_bst.h / .cpp          # Lab 6 - Binary search tree: insertBST, searchBST
-│   ├── lab7_searching.h / .cpp    # Lab 7 - Searching: linearSearchKeyword, binarySearchPriceFilter
-│   └── lab8_sorting.h / .cpp      # Lab 8 - Sorting: quickSortByPrice, quickSortByStock, insertionSortByBrand
-├── Makefile
-├── build.bat
-└── README.md
-```
+All input is read as full lines, so mistakes are caught instead of breaking the program.
 
----
+| Prompt | Accepted input |
+|---|---|
+| Menu selection | Whole number 1–10 |
+| Brand | A real catalog brand |
+| Keyword | Any non-empty text |
+| Price range | Non-negative numbers, max ≥ min |
+| Product ID | An existing ID, or `0` to cancel |
+| Sort option | 1, 2, or 3 |
+
+Invalid input (letters, blanks, `5abc`, out-of-range numbers) prints `Invalid input... Try again.` and repeats the same prompt.
 
 ## Requirements
 
-- **Windows** (the program uses `<windows.h>` for colored console output)
-- A C++17 compiler such as **MinGW-w64 `g++`** (also works with MSYS2 or Code::Blocks' bundled MinGW)
+- A C++ compiler with C++11 or newer (g++ from MSYS2/MinGW recommended)
+- **Windows** (brand colors use `windows.h`)
 
----
+## Build and Run
 
-## Build & Run
-
-### Option 1: `build.bat` (simplest)
-
-Double-click `build.bat`, or run it from a terminal:
-
-```bat
-build.bat
-```
-
-It compiles every file in `BlitzShop/` into `BlitzShop.exe` and launches it.
-
-### Option 2: Makefile
-
-```bash
-make        # build
-make run    # build and run
-make clean  # remove BlitzShop.exe
-```
-
-### Option 3: Manual compile
-
-```bash
-g++ -std=c++17 -g BlitzShop/*.cpp -o BlitzShop.exe
-./BlitzShop.exe
-```
-
-### Debugging tips
-
-- Compile with `-g` (already included above) and open `BlitzShop.exe` in GDB or the VS Code debugger.
-- Because each feature lives in its own file, set breakpoints directly in the module you are testing, e.g. `lab6_bst.cpp` for lookup problems or `lab5_checkout_queue.cpp` for order processing.
-- Shared state (cart, undo stack, queue, BST root) is declared in `globals.h`, so you can watch those variables from any file.
-
----
-
-## Default Catalog
-
-| ID | Product | Category | Brand | Price | Stock |
-|----|---------|----------|-------|-------|-------|
-| 101 | PlayStation 5 Console | Consoles | Sony | $499.99 | 10 |
-| 102 | Spider-Man 2 (PS5) | Games | Sony | $69.99 | 25 |
-| 103 | Xbox Series X Console | Consoles | Microsoft | $499.99 | 8 |
-| 104 | Halo Infinite (Xbox) | Games | Microsoft | $59.99 | 30 |
-| 105 | Nintendo Switch OLED | Consoles | Nintendo | $349.99 | 15 |
-| 106 | Mario Kart 8 Deluxe | Games | Nintendo | $59.99 | 40 |
-| 107 | Pokemon TCG: 151 ETB | Pokemon Cards | The Pokemon Company | $49.99 | 12 |
-| 108 | Pokemon Booster Bundle | Pokemon Cards | The Pokemon Company | $26.99 | 20 |
-| 109 | Fortnite 2800 V-Bucks | Gift Cards | Epic Games | $19.99 | 50 |
-| 110 | Roblox $10 Gift Card | Gift Cards | Roblox Corporation | $10.00 | 50 |
-
----
-
-## Usage Example
+All `.cpp` files must be compiled together, so do not use "build active file" in VS Code. Open a terminal in the project folder and run:
 
 ```
-Enter selection: 5
-Enter Product ID to add: 105
-Added to cart: Nintendo Switch OLED
-
-Enter selection: 6
-
---- Processing Order ---
-Purchased: Nintendo Switch OLED | Remaining Stock: 14
-Order Complete. Grand Total: $349.99
+g++ -std=c++17 *.cpp -o blitzshop
+./blitzshop
 ```
 
----
+In PowerShell, run it with `.\blitzshop.exe`.
 
-## Author
+If `*.cpp` does not work in your terminal, list the files instead:
 
-**John Dexter Basada** ([@johndexterbasada2](https://github.com/johndexterbasada2)) – BSCPE 3A, CS201 Data Structures and Algorithm Analysis
+```
+g++ -std=c++17 main.cpp console_color.cpp display.cpp globals.cpp lab1_catalog.cpp lab2_cart.cpp lab3_brand_banner.cpp lab4_undo_stack.cpp lab5_checkout_queue.cpp lab6_bst.cpp lab7_searching.cpp lab8_sorting.cpp -o blitzshop
+```
+
+## Sample Catalog
+
+| ID | Product | Brand | Price (PHP) | Stock |
+|---|---|---|---|---|
+| 101 | PlayStation 5 Console | Sony | 31,749.37 | 10 |
+| 102 | Spider-Man 2 (PS5) | Sony | 4,444.37 | 25 |
+| 103 | Xbox Series X Console | Microsoft | 31,749.37 | 8 |
+| 104 | Halo Infinite (Xbox) | Microsoft | 3,809.37 | 30 |
+| 105 | Nintendo Switch OLED | Nintendo | 22,224.37 | 15 |
+| 106 | Mario Kart 8 Deluxe | Nintendo | 3,809.37 | 40 |
+| 107 | Pokemon TCG: 151 ETB | The Pokemon Company | 3,174.37 | 12 |
+| 108 | Pokemon Booster Bundle | The Pokemon Company | 1,713.87 | 20 |
+| 109 | Fortnite 2800 V-Bucks | Epic Games | 1,269.37 | 50 |
+| 110 | Roblox $10 Gift Card | Roblox Corporation | 635.00 | 50 |
