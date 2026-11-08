@@ -11,8 +11,17 @@
 #include "lab3_brand_banner.h"
 #include "lab8_sorting.h"
 #include "lab7_searching.h"
+#include "input_utils.h"
 
 using namespace std;
+
+// Case-insensitive compare, returns the catalog's official brand spelling ("" if none)
+static string findBrand(Product* catalog, int size, const string& input) {
+    auto lower = [](string s) { for (char& c : s) c = (char)tolower((unsigned char)c); return s; };
+    for (int i = 0; i < size; i++)
+        if (lower(catalog[i].brand) == lower(input)) return catalog[i].brand;
+    return "";
+}
 
 int main() {
     int catalogSize = CATALOG_SIZE;
@@ -40,43 +49,45 @@ int main() {
         cout << "9. Sort Inventory Display (By Price, Stock, or Brand)\n";
         cout << "10. Exit\n";
         cout << "======================================================================\n";
-        cout << "Enter selection: ";
-        cin >> choice;
+        choice = readInt("Enter selection (1-10): ", 1, 10);
 
         if (choice == 1) {
             displayCatalog(catalog, catalogSize);
         } 
         else if (choice == 2) {
             string brandObj;
-            cout << "Enter Brand Name: ";
-            cin.ignore();
-            getline(cin, brandObj);
+            while (true) {
+                brandObj = findBrand(catalog, catalogSize, readText("Enter Brand Name: "));
+                if (brandObj != "") break;
+                cout << "Invalid brand. Available: Sony, Microsoft, Nintendo, The Pokemon Company, Epic Games, Roblox Corporation. Try again.\n";
+            }
             cout << "\n--- Filtered by " << brandObj << " ---\n";
             for (int i = 0; i < catalogSize; i++) {
                 if (catalog[i].brand == brandObj) displayProduct(&catalog[i]);
             }
         } 
         else if (choice == 3) {
-            string kw;
-            cout << "Enter keyword: ";
-            cin >> kw;
+            string kw = readText("Enter keyword: ");
             linearSearchKeyword(catalog, catalogSize, kw);
         } 
         else if (choice == 4) {
-            double minP, maxP;
-            cout << "Enter minimum price (PHP): ";
-            cin >> minP;
-            cout << "Enter maximum price (PHP): ";
-            cin >> maxP;
+            double minP = readDouble("Enter minimum price (PHP): ", 0);
+            double maxP;
+            while (true) {
+                maxP = readDouble("Enter maximum price (PHP): ", 0);
+                if (maxP >= minP) break;
+                cout << "Invalid input. Maximum price must be greater than or equal to the minimum. Try again.\n";
+            }
             binarySearchPriceFilter(catalog, catalogSize, minP, maxP);
         } 
         else if (choice == 5) {
-            int id;
-            cout << "Enter Product ID to add: ";
-            cin >> id;
-            BSTNode* result = searchBST(bstRoot, id);
-            if (result) addToCart(result->product);
-            else cout << "Product ID not found.\n";
+            while (true) {
+                int id = readInt("Enter Product ID to add (0 to cancel): ", 0, INT_MAX);
+                if (id == 0) break;
+                BSTNode* result = searchBST(bstRoot, id);
+                if (result) { addToCart(result->product); break; }
+                cout << "Invalid input. Product ID not found. Try again.\n";
+            }
         } 
         else if (choice == 6) {
             enqueueCheckout(cartHead);
@@ -89,9 +100,8 @@ int main() {
             showBrandBanner();
         } 
         else if (choice == 9) {
-            int sortOpt;
-            cout << "1. Sort by Price (Ascending)\n2. Sort by Stock (Descending)\n3. Sort by Brand (Alphabetical)\nSelection: ";
-            cin >> sortOpt;
+            cout << "1. Sort by Price (Ascending)\n2. Sort by Stock (Descending)\n3. Sort by Brand (Alphabetical)\n";
+            int sortOpt = readInt("Selection (1-3): ", 1, 3);
             if (sortOpt == 1) quickSortByPrice(catalog, 0, catalogSize - 1);
             else if (sortOpt == 2) quickSortByStock(catalog, 0, catalogSize - 1);
             else if (sortOpt == 3) insertionSortByBrand(catalog, catalogSize);
