@@ -6,11 +6,20 @@
 
 using namespace std;
 
+static string toLower(string s) {
+    for (char& c : s) c = (char)tolower((unsigned char)c);
+    return s;
+}
+
+// Linear search: checks every product's name, category AND brand (not case-sensitive)
 void linearSearchKeyword(Product* catalog, int size, string keyword) {
     cout << "\n--- Search Results for '" << keyword << "' ---\n";
+    string key = toLower(keyword);
     bool found = false;
     for (int i = 0; i < size; i++) {
-        if (catalog[i].name.find(keyword) != string::npos || catalog[i].category.find(keyword) != string::npos) {
+        if (toLower(catalog[i].name).find(key) != string::npos ||
+            toLower(catalog[i].category).find(key) != string::npos ||
+            toLower(catalog[i].brand).find(key) != string::npos) {
             displayProduct(&catalog[i]);
             found = true;
         }
@@ -18,6 +27,7 @@ void linearSearchKeyword(Product* catalog, int size, string keyword) {
     if (!found) cout << "No products found.\n";
 }
 
+// Binary search: finds the first product >= minPrice in a price-sorted copy, then walks up to maxPrice
 void binarySearchPriceFilter(Product* catalog, int size, double minPrice, double maxPrice) {
     Product* tempCatalog = new Product[size];
     for (int i = 0; i < size; i++) tempCatalog[i] = catalog[i];
@@ -33,14 +43,15 @@ void binarySearchPriceFilter(Product* catalog, int size, double minPrice, double
             left = mid + 1;
         }
     }
-    
+
     cout << "\n--- Products between PHP " << minPrice << " and PHP " << maxPrice << " ---\n";
+    int shown = 0;
     if (startIdx != -1) {
         for (int i = startIdx; i < size && tempCatalog[i].price <= maxPrice; i++) {
             displayProduct(&tempCatalog[i]);
+            shown++;
         }
-    } else {
-        cout << "No products in this price range.\n";
     }
+    if (shown == 0) cout << "No products in this price range.\n";
     delete[] tempCatalog;
 }

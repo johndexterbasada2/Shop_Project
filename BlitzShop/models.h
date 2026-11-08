@@ -25,14 +25,20 @@ struct BrandNode {
     BrandNode* next;
 };
 
-// Stack node (admin undo, LIFO)
+// What kind of action an undo/redo stack entry records
+enum ActionType { ACTION_CART_ADD, ACTION_RESTOCK };
+
+// Stack node (admin undo / redo, LIFO)
 struct StackNode {
+    ActionType type;
     Product* product;
+    int amount;          // units added to cart (1) or restocked
     StackNode* next;
 };
 
 // Queue node (checkout orders, FIFO)
 struct QueueNode {
+    int orderNo;
     CartNode* cartHead;
     QueueNode* next;
 };

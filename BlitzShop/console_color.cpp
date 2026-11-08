@@ -10,6 +10,7 @@ void setBrandColor(string brand) {
     else if (brand == "Nintendo") SetConsoleTextAttribute(hConsole, 12);
     else if (brand == "The Pokemon Company") SetConsoleTextAttribute(hConsole, 14);
     else if (brand == "Epic Games") SetConsoleTextAttribute(hConsole, 11);
+    else if (brand == "Roblox Corporation") SetConsoleTextAttribute(hConsole, 13);
     else SetConsoleTextAttribute(hConsole, 7);
 }
 
