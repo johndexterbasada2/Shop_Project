@@ -1,6 +1,8 @@
 #pragma once
 #include "models.h"
 
+namespace globals {
+
 // Shared state. Defined once in globals.cpp.
 extern CartNode*  cartHead;
 extern CartNode*  cartTail;
@@ -10,3 +12,5 @@ extern StackNode* redoStackHead;
 extern QueueNode* checkoutQueueHead;
 extern QueueNode* checkoutQueueTail;
 extern BSTNode*   bstRoot;
+
+}  // namespace globals

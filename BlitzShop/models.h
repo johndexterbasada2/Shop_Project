@@ -1,13 +1,15 @@
 #pragma once
 #include <string>
 
+using namespace std;
+
 // ---------- Data models used across the whole project ----------
 
 struct Product {
     int id;
-    std::string name;
-    std::string category;
-    std::string brand;
+    string name;
+    string category;
+    string brand;
     double price;
     int stockQuantity;
 };
@@ -21,7 +23,7 @@ struct CartNode {
 
 // Circular singly linked list node (partner brand banner)
 struct BrandNode {
-    std::string brandName;
+    string brandName;
     BrandNode* next;
 };
 

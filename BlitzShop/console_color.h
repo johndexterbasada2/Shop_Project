@@ -1,5 +1,12 @@
 #pragma once
 #include <string>
 
-void setBrandColor(std::string brand);
+using namespace std;
+
+namespace color {
+
+void setBrandColor(string brand);
+void setGreen();      // green text, used for "stock added" messages
 void resetColor();
+
+}  // namespace color

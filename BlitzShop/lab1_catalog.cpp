@@ -5,6 +5,8 @@
 
 using namespace std;
 
+namespace inventory {
+
 // All prices are in Philippine pesos (PHP).
 Product* createCatalog(int& size, int& capacity) {
     Product* catalog = new Product[CATALOG_SIZE]{
@@ -30,13 +32,13 @@ static Product* moved(Product* p, Product* oldBase, Product* newBase) {
 }
 
 static void relocatePointers(Product* oldBase, Product* newBase) {
-    for (CartNode* c = cartHead; c; c = c->next)
+    for (CartNode* c = globals::cartHead; c; c = c->next)
         c->product = moved(c->product, oldBase, newBase);
-    for (StackNode* s = undoStackHead; s; s = s->next)
+    for (StackNode* s = globals::undoStackHead; s; s = s->next)
         s->product = moved(s->product, oldBase, newBase);
-    for (StackNode* s = redoStackHead; s; s = s->next)
+    for (StackNode* s = globals::redoStackHead; s; s = s->next)
         s->product = moved(s->product, oldBase, newBase);
-    for (QueueNode* q = checkoutQueueHead; q; q = q->next)
+    for (QueueNode* q = globals::checkoutQueueHead; q; q = q->next)
         for (CartNode* c = q->cartHead; c; c = c->next)
             c->product = moved(c->product, oldBase, newBase);
 }
@@ -55,3 +57,5 @@ Product* addProductToCatalog(Product* catalog, int& size, int& capacity, const P
     catalog[size++] = item;
     return catalog;
 }
+
+}  // namespace inventory

@@ -2,6 +2,8 @@
 #pragma once
 #include "models.h"
 
+namespace history {
+
 // Raw stack operations
 void pushUndo(ActionType type, Product* p, int amount);
 bool popUndo(StackNode& out);       // false when the stack is empty
@@ -14,3 +16,5 @@ void clearRedo();
 void restockProduct(Product* p, int amount);   // adds stock, can be undone
 void undoLastAction();                         // reverses the latest cart-add or restock
 void redoLastAction();                         // re-applies the latest undone action
+
+}  // namespace history
