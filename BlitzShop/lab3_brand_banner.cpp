@@ -43,26 +43,10 @@ void initBrandBanner(Product* catalog, int size) {
     if (tail) tail->next = globals::bannerHead;   // close the circle
 }
 
-void showBrandBanner() {
-    if (!globals::bannerHead) return;
-    cout << "\n--- Featured Partner Brands ---\n";
-    BrandNode* curr = globals::bannerHead;
-    for (int i = 0; i < bannerCount; i++) {
-        cout << "[ ";
-        color::setBrandColor(curr->brandName);
-        cout << curr->brandName;
-        color::resetColor();
-        cout << " ] ";
-        curr = curr->next;
-    }
-    cout << "\n";
-}
-
 // Boxed table with one brand per row. Brands are centered in their cells, the whole table is
 // centered on the screen, and brands added later simply follow at the bottom.
-void showBrandTable() {
+void showBrandTable(const string& title) {
     if (!globals::bannerHead) return;
-    const string title = "OFFICIAL BRANDS";
     int inner = (int)title.size();
     BrandNode* c = globals::bannerHead;
     for (int i = 0; i < bannerCount; i++, c = c->next) inner = max(inner, (int)c->brandName.size());
@@ -88,6 +72,13 @@ void showBrandTable() {
         cout << string((size_t)(inner - left - len), ' ') << "|\n";
     }
     cout << margin << line << "\n";
+}
+
+// The partner showcase uses the same boxed table as the brand filter
+void showBrandBanner() {
+    if (!globals::bannerHead) return;
+    cout << "\n--- Featured Partner Brands ---\n\n";
+    showBrandTable("FEATURED PARTNER BRANDS");
 }
 
 string brandListText() {

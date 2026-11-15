@@ -73,12 +73,18 @@ inline int readInt(const string& prompt, int minVal = INT_MIN, int maxVal = INT_
 }
 
 // Decimal number >= minVal. Rejects letters, "12abc", blanks, nan/inf.
-inline double readDouble(const string& prompt, double minVal, int& attempts) {
+// If goBack is given, typing B (or b) sets it to true and returns 0.
+inline double readDoubleImpl(const string& prompt, double minVal, int& attempts, bool* goBack) {
     while (true) {
         cout << prompt;
         string line;
         readRawLine(line);
         line = trimText(line);
+
+        if (goBack && (line == "b" || line == "B")) {
+            *goBack = true;
+            return 0;
+        }
 
         char* end = nullptr;
         errno = 0;
@@ -92,9 +98,22 @@ inline double readDouble(const string& prompt, double minVal, int& attempts) {
     }
 }
 
+inline double readDouble(const string& prompt, double minVal, int& attempts) {
+    return readDoubleImpl(prompt, minVal, attempts, nullptr);
+}
+
 inline double readDouble(const string& prompt, double minVal = 0.0) {
     int attempts = 0;
-    return readDouble(prompt, minVal, attempts);
+    return readDoubleImpl(prompt, minVal, attempts, nullptr);
+}
+
+inline double readDoubleOrBack(const string& prompt, double minVal, bool& goBack, int& attempts) {
+    return readDoubleImpl(prompt, minVal, attempts, &goBack);
+}
+
+inline double readDoubleOrBack(const string& prompt, double minVal, bool& goBack) {
+    int attempts = 0;
+    return readDoubleImpl(prompt, minVal, attempts, &goBack);
 }
 
 // Non-empty text (spaces allowed, e.g. "The Pokemon Company").

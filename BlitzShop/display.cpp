@@ -8,49 +8,60 @@ using namespace std;
 
 namespace display {
 
-static const int W_ID = 5, W_NAME = 30, W_CAT = 15, W_BRAND = 20, W_PRICE = 16, W_STOCK = 10;
+static const int W_NO = 5, W_ID = 9, W_NAME = 30, W_CAT = 15, W_BRAND = 20, W_PRICE = 16, W_STOCK = 10;
+static const int W_REST = W_NAME + W_CAT + W_BRAND + W_PRICE + W_STOCK;
 
 int tableWidth(bool showId) {
-    return (showId ? W_ID : 0) + W_NAME + W_CAT + W_BRAND + W_PRICE + W_STOCK;
+    return (showId ? W_ID : 0) + W_REST;
 }
 
-// Cuts text that is too long so one long name cannot push the columns out of line
-static string fit(const string& s, int width) {
+int pickListWidth() {
+    return W_NO + W_ID + W_REST;
+}
+
+string fitText(const string& s, int width) {
     if ((int)s.size() < width) return s;
     return s.substr(0, width - 4) + "...";
+}
+
+string money(double amount) {
+    ostringstream out;
+    out << "PHP " << fixed << setprecision(2) << amount;
+    return out.str();
 }
 
 static void printSeparator(int width) {
     cout << string(width, '=') << "\n";
 }
 
-static void printHeader(const string& firstColumn, int firstWidth) {
-    int width = firstWidth + W_NAME + W_CAT + W_BRAND + W_PRICE + W_STOCK;
-    printSeparator(width);
+// firstWidth: optional "No." column, idWidth: optional "Prod_ID" column
+static void printHeader(int numberWidth, int idWidth) {
+    printSeparator(numberWidth + idWidth + W_REST);
     cout << left;
-    if (firstWidth > 0) cout << setw(firstWidth) << firstColumn;
+    if (numberWidth > 0) cout << setw(numberWidth) << "No.";
+    if (idWidth > 0) cout << setw(idWidth) << "Prod_ID";
     cout << setw(W_NAME) << "Name" << setw(W_CAT) << "Category" << setw(W_BRAND) << "Brand"
          << setw(W_PRICE) << "Price" << "Stock\n";
-    printSeparator(width);
+    printSeparator(numberWidth + idWidth + W_REST);
 }
 
-static void printRow(const string& label, int labelWidth, Product* p) {
-    ostringstream price;
-    price << "PHP " << fixed << setprecision(2) << p->price;
-    color::setBrandColor(p->brand);
+// The number and the Prod_ID are printed in the normal color, the rest of the row in the brand color
+static void printRow(const string& number, int numberWidth, Product* p, int idWidth) {
     cout << left;
-    if (labelWidth > 0) cout << setw(labelWidth) << label;
-    cout << setw(W_NAME) << fit(p->name, W_NAME)
-         << setw(W_CAT) << fit(p->category, W_CAT)
-         << setw(W_BRAND) << fit(p->brand, W_BRAND)
-         << setw(W_PRICE) << price.str()
+    if (numberWidth > 0) cout << setw(numberWidth) << number;
+    if (idWidth > 0) cout << setw(idWidth) << p->id;
+    color::setBrandColor(p->brand);
+    cout << setw(W_NAME) << fitText(p->name, W_NAME)
+         << setw(W_CAT) << fitText(p->category, W_CAT)
+         << setw(W_BRAND) << fitText(p->brand, W_BRAND)
+         << setw(W_PRICE) << money(p->price)
          << "Stock: " << p->stockQuantity
          << "\n";
     color::resetColor();
 }
 
 void displayHeader(bool showId) {
-    printHeader("ID", showId ? W_ID : 0);
+    printHeader(0, showId ? W_ID : 0);
 }
 
 void displayFooter(bool showId) {
@@ -58,7 +69,7 @@ void displayFooter(bool showId) {
 }
 
 void displayProduct(Product* p, bool showId) {
-    printRow(showId ? to_string(p->id) : "", showId ? W_ID : 0, p);
+    printRow("", 0, p, showId ? W_ID : 0);
 }
 
 void displayCatalog(Product* catalog, int size, bool showId) {
@@ -68,9 +79,9 @@ void displayCatalog(Product* catalog, int size, bool showId) {
 }
 
 void displayPickList(Product** items, int count) {
-    printHeader("No.", W_ID);
-    for (int i = 0; i < count; i++) printRow(to_string(i + 1) + ".", W_ID, items[i]);
-    printSeparator(tableWidth(true));
+    printHeader(W_NO, W_ID);
+    for (int i = 0; i < count; i++) printRow(to_string(i + 1) + ".", W_NO, items[i], W_ID);
+    printSeparator(pickListWidth());
 }
 
 }  // namespace display

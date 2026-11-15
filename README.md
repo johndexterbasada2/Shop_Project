@@ -9,17 +9,18 @@ A console-based C++ program (CS201 Data Structures & Algorithms final output) th
 
 ## Features
 
-- Browse the full product catalog in a color-coded table (each brand has its own color). **Customers never see the Product ID**, only the admin screens show it
+- Browse the full product catalog in a color-coded table (each brand has its own color). **The Prod_ID column is shown in the normal color while the rest of the row uses the brand color**
 - **Centered screen:** every menu and table is centered in the terminal, and the screen is cleared each time you pick an option
 - **One-key menus:** menu choices are accepted the moment you press the key (no Enter). Text and number prompts still use Enter
 - **Green stock messages:** restocking (and redoing a restock) shows its message in green
 - Brand integration everywhere: the brand shows in the catalog table, the brand filter, keyword search (matches name, category **and brand**) and the partner brand banner
-- Shopping cart (doubly linked list) with **keyword add** (no Product ID), **quantity**, **add several items in one go**, **remove an item**, and **browse forward and backward**
+- Shopping cart (doubly linked list) with **keyword add**, **quantity**, **add several items in one go**, **remove an item**, every item shown in **one table**, and **browse forward and backward** (the current row is marked with `>`)
 - **Live stock tracking:** adding an item to the cart reduces its stock right away, and Undo returns it
 - **Admin Undo and Redo** (two stacks) for cart additions, cart removals, restocking and **added products**
 - **Checkout queue** that holds several orders, serves them first-come, first-served, and shows every waiting order (customer and items) plus the completed orders
 - **Dynamic catalog:** an admin can add new products and the catalog array resizes itself (capacity doubles) when full
 - Sorting by price, stock, or brand
+- **Back options:** the first prompt of every screen accepts `0` (or `B` for the price range) to go back, so an accidental key press is harmless
 - **Input validation:** wrong input never crashes the program. It shows an error with the attempts left. **After 3 wrong answers in a row the program goes back to the menu**
 - **Zero memory leaks:** every list, stack, queue, tree and array is freed on exit (checked with AddressSanitizer and LeakSanitizer)
 
@@ -62,14 +63,14 @@ Other files: `models.h` (structs), `globals.h/.cpp` (shared pointers), `display.
 
 | # | Option | Notes |
 |---|---|---|
-| 1 | View Complete Catalog | Shows current stock. No Product ID |
+| 1 | View Complete Catalog | Shows Prod_ID and current stock |
 | 2 | Filter by Brand | The brands are shown in a centered table (new brands follow at the bottom). Type just a keyword (`son`, `nin`, `pokemon`), not case-sensitive |
 | 3 | Search by Keyword | Linear search, not case-sensitive. Matches whole words in the name, category and brand, so `2` finds Spider-Man 2 but not Fortnite 2800 |
 | 4 | Filter by Price Range | Binary search, max must be at least min |
 | 5 | Add Item to Shopping Cart | Submenu: add items (by keyword, with quantity), remove an item, view cart, browse cart (Next / Previous) |
 | 6 | Process Customer Checkout Queue | Submenu: place order (asks the customer name), process next order, view queue (waiting and completed orders) |
-| 7 | Perform Admin Undo Action | Submenu: undo, redo, restock a product, add a new product. Admin tables show the Product ID |
-| 8 | Brand Banner | Circular list of partner brands |
+| 7 | Perform Admin Undo Action | Submenu: undo, redo, restock a product, add a new product. |
+| 8 | Brand Banner | Circular list of partner brands, shown in the same boxed table as the brand filter |
 | 9 | Sort Inventory Display | Price, stock, or brand (display only). After a result it returns to the sort menu |
 | 0 | Exit | Frees all memory, then quits |
 
@@ -95,7 +96,7 @@ All input is read as full lines, so mistakes are caught instead of breaking the 
 | Cart item number | A number shown in the cart table, or `0` to go back |
 | Customer name | Any non-empty text |
 | Price range | Non-negative numbers, max ≥ min |
-| Product ID (admin only) | An existing ID, or `0` to cancel |
+| Product ID (restock) | An existing ID, or `0` to go back |
 
 Invalid input (letters, blanks, `5abc`, out-of-range numbers, a keyword that matches nothing) prints an error with the attempts left and repeats the same prompt. **After 3 failed attempts in a row the program shows `Too many invalid attempts` and goes back to the menu.**
 

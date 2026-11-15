@@ -15,7 +15,7 @@ bool takeUnits(Product* p, int qty);                // removes units, deletes th
 
 int lineCount();                                    // number of different products in the cart
 CartNode* lineAt(int number);                       // 1-based position, nullptr if out of range
-void displayCart(bool numbered = false);
+void displayCart(int highlight = 0);                // one table with every item; highlight marks that row with >
 void browseCart();                                  // walk the cart forward/backward using the prev/next links
 void destroyCart();                                 // frees every cart node
 

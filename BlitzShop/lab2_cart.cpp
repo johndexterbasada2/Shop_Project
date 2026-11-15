@@ -4,6 +4,7 @@
 #include "lab4_undo_stack.h"
 #include "console_color.h"
 #include "terminal.h"
+#include "display.h"
 #include <iostream>
 #include <iomanip>
 
@@ -91,33 +92,42 @@ CartNode* lineAt(int number) {
     return (number >= 1) ? c : nullptr;
 }
 
-void displayCart(bool numbered) {
+// Every cart item in ONE table. `highlight` (1-based) marks a row with ">" for browsing.
+void displayCart(int highlight) {
     if (!globals::cartHead) {
         cout << "Shopping cart is empty.\n";
         return;
     }
-    cout << "--- Shopping Cart ---\n";
-    CartNode* curr = globals::cartHead;
+    const int W_NO = 5, W_ID = 9, W_NAME = 30, W_BRAND = 20, W_QTY = 6, W_PRICE = 15, W_SUB = 15;
+    int width = W_NO + W_ID + W_NAME + W_BRAND + W_QTY + W_PRICE + W_SUB;
+
+    cout << string(width, '=') << "\n" << left
+         << setw(W_NO) << "No." << setw(W_ID) << "Prod_ID" << setw(W_NAME) << "Name"
+         << setw(W_BRAND) << "Brand" << setw(W_QTY) << "Qty" << setw(W_PRICE) << "Unit Price"
+         << "Subtotal\n" << string(width, '=') << "\n";
+
     double total = 0;
     int number = 1;
-    while (curr) {
-        double subtotal = curr->product->price * curr->quantity;
-        if (numbered) cout << number << ". ";
-        else cout << "- ";
-        color::setBrandColor(curr->product->brand);
-        cout << curr->product->name;
+    for (CartNode* c = globals::cartHead; c; c = c->next, number++) {
+        Product* p = c->product;
+        double subtotal = p->price * c->quantity;
+        string mark = (number == highlight ? "> " : "") + to_string(number) + ".";
+        cout << setw(W_NO) << mark << setw(W_ID) << p->id;     // number and Prod_ID stay plain
+        color::setBrandColor(p->brand);
+        cout << setw(W_NAME) << display::fitText(p->name, W_NAME)
+             << setw(W_BRAND) << display::fitText(p->brand, W_BRAND)
+             << setw(W_QTY) << c->quantity
+             << setw(W_PRICE) << display::money(p->price)
+             << display::money(subtotal) << "\n";
         color::resetColor();
-        cout << " x" << curr->quantity << " | PHP " << fixed << setprecision(2)
-             << curr->product->price << " each | PHP " << subtotal << "\n";
         total += subtotal;
-        curr = curr->next;
-        number++;
     }
-    cout << "Total: PHP " << fixed << setprecision(2) << total << "\n";
+    cout << string(width, '=') << "\n"
+         << right << setw(width) << ("Total: " + display::money(total)) << left << "\n";
 }
 
 // Doubly linked list navigation: next moves along ->next, previous moves along ->prev
-// One key press per move (no Enter). The screen is redrawn for every item.
+// The whole cart is shown in one table and the > marker moves with each key press (no Enter).
 void browseCart() {
     if (!globals::cartHead) {
         term::newScreen(70);
@@ -131,15 +141,11 @@ void browseCart() {
     int pos = 1;
     string note;
     while (true) {
-        term::newScreen(80);
+        term::newScreen(display::tableWidth());
         cout << term::centered("--- Browse Cart ---") << "\n\n";
-        cout << "Item " << pos << " of " << total << ": ";
-        color::setBrandColor(curr->product->brand);
-        cout << curr->product->name;
-        color::resetColor();
-        cout << " (" << curr->product->brand << ") x" << curr->quantity << " | PHP "
-             << fixed << setprecision(2) << curr->product->price << " each\n";
-        if (!note.empty()) cout << "\n" << note << "\n";
+        displayCart(pos);
+        cout << "\nItem " << pos << " of " << total << ": " << curr->product->name << "\n";
+        if (!note.empty()) cout << note << "\n";
         note.clear();
 
         char cmd = term::menuKey("\n[N]ext  [P]revious  [Q]uit: ", "npq");

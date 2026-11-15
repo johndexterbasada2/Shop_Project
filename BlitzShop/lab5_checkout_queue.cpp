@@ -34,7 +34,11 @@ void enqueueCheckout(CartNode* items) {
         cout << "Your cart is empty. Add items first.\n";
         return;
     }
-    string customer = input::readText("Customer name: ");   // asked first: nothing changes if it fails
+    string customer = input::readText("Customer name (0 to go back): ");   // asked first: nothing changes if it fails
+    if (customer == "0") {
+        cout << "Order cancelled. Your cart was not changed.\n";
+        return;
+    }
 
     QueueNode* newNode = new QueueNode{nextOrderNo++, customer, items, nullptr};
     int position = 1;
