@@ -12,7 +12,7 @@ namespace inventory {
 // All prices are in Philippine pesos (PHP).
 Product* createCatalog(int& size, int& capacity) {
     Product* catalog = new Product[CATALOG_SIZE]{
-        {101, "PlayStation 5 Console", "Consoles", "Sony", 31749.37, 10},
+        {101, "PlayStation 5 (PS5) Console", "Consoles", "Sony", 31749.37, 10},
         {102, "Spider-Man 2 (PS5)", "Games", "Sony", 4444.37, 25},
         {103, "Xbox Series X Console", "Consoles", "Microsoft", 31749.37, 8},
         {104, "Halo Infinite (Xbox)", "Games", "Microsoft", 3809.37, 30},
@@ -43,6 +43,15 @@ static void relocatePointers(Product* oldBase, Product* newBase) {
     for (QueueNode* q = globals::checkoutQueueHead; q; q = q->next)
         for (CartNode* c = q->cartHead; c; c = c->next)
             c->product = moved(c->product, oldBase, newBase);
+}
+
+bool isProductInUse(const Product* p) {
+    for (CartNode* c = globals::cartHead; c; c = c->next)
+        if (c->product == p) return true;
+    for (QueueNode* q = globals::checkoutQueueHead; q; q = q->next)
+        for (CartNode* c = q->cartHead; c; c = c->next)
+            if (c->product == p) return true;
+    return false;
 }
 
 Product* addProductToCatalog(Product* catalog, int& size, int& capacity, const Product& item) {

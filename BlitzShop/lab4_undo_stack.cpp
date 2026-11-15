@@ -1,7 +1,6 @@
-// Lab 4 - Stack (LIFO): admin undo / redo of inventory actions
+// Lab 4 - Stack (LIFO): admin undo / redo of inventory actions (restock, add product)
 #include "lab4_undo_stack.h"
 #include "lab1_catalog.h"
-#include "lab2_cart.h"
 #include "globals.h"
 #include "console_color.h"
 #include <iostream>
@@ -59,26 +58,7 @@ void undoLastAction(Product*& catalog, int& size, int& capacity) {
     }
     Product* p = action.product;
 
-    if (action.type == ACTION_CART_ADD) {
-        if (!cart::takeUnits(p, action.amount)) {
-            cout << "Cannot undo: " << p->name << " is no longer in the cart.\n";
-            pushUndo(action.type, p, action.amount, action.item);
-            return;
-        }
-        p->stockQuantity += action.amount;
-        cout << "Undo successful. Removed " << action.amount << " x " << p->name
-             << " from cart. Stock restored to " << p->stockQuantity << ".\n";
-    } else if (action.type == ACTION_CART_REMOVE) {
-        if (p->stockQuantity < action.amount) {
-            cout << "Cannot undo: only " << p->stockQuantity << " of " << p->name << " left in stock.\n";
-            pushUndo(action.type, p, action.amount, action.item);
-            return;
-        }
-        cart::putUnits(p, action.amount);
-        p->stockQuantity -= action.amount;
-        cout << "Undo successful. Put " << action.amount << " x " << p->name
-             << " back in the cart. Stock is now " << p->stockQuantity << ".\n";
-    } else if (action.type == ACTION_RESTOCK) {
+    if (action.type == ACTION_RESTOCK) {
         if (p->stockQuantity < action.amount) {
             cout << "Cannot undo restock of " << p->name << ": those units are already in carts.\n";
             pushUndo(action.type, p, action.amount, action.item);   // keep the action on the stack
@@ -90,6 +70,11 @@ void undoLastAction(Product*& catalog, int& size, int& capacity) {
     } else {   // ACTION_ADD_PRODUCT: the new product is always the last one in the array
         if (size == 0 || p != &catalog[size - 1]) {
             cout << "Cannot undo: " << p->name << " is no longer the newest product.\n";
+            pushUndo(action.type, p, action.amount, action.item);
+            return;
+        }
+        if (inventory::isProductInUse(p)) {   // a cart or a waiting order still points at it
+            cout << "Cannot undo: " << p->name << " is in the cart or in a waiting order.\n";
             pushUndo(action.type, p, action.amount, action.item);
             return;
         }
@@ -109,26 +94,7 @@ void redoLastAction(Product*& catalog, int& size, int& capacity) {
     }
     Product* p = action.product;
 
-    if (action.type == ACTION_CART_ADD) {
-        if (p->stockQuantity < action.amount) {
-            cout << "Cannot redo: only " << p->stockQuantity << " of " << p->name << " left in stock.\n";
-            pushRedo(action.type, p, action.amount, action.item);
-            return;
-        }
-        cart::putUnits(p, action.amount);
-        p->stockQuantity -= action.amount;
-        cout << "Redo successful. Added " << action.amount << " x " << p->name
-             << " back to cart. Stock is now " << p->stockQuantity << ".\n";
-    } else if (action.type == ACTION_CART_REMOVE) {
-        if (!cart::takeUnits(p, action.amount)) {
-            cout << "Cannot redo: " << p->name << " is not in the cart.\n";
-            pushRedo(action.type, p, action.amount, action.item);
-            return;
-        }
-        p->stockQuantity += action.amount;
-        cout << "Redo successful. Removed " << action.amount << " x " << p->name
-             << " from cart again. Stock is now " << p->stockQuantity << ".\n";
-    } else if (action.type == ACTION_RESTOCK) {
+    if (action.type == ACTION_RESTOCK) {
         p->stockQuantity += action.amount;
         color::setGreen();
         cout << "Redo successful. Restocked " << p->name << " by " << action.amount

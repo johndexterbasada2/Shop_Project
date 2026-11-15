@@ -1,7 +1,6 @@
 // Lab 5 - Queue (FIFO): checkout line
 #include "lab5_checkout_queue.h"
 #include "globals.h"
-#include "lab4_undo_stack.h"
 #include "console_color.h"
 #include "input_utils.h"
 #include <iostream>
@@ -50,8 +49,6 @@ void enqueueCheckout(CartNode* items) {
         globals::checkoutQueueTail = newNode;
     }
     globals::cartHead = globals::cartTail = nullptr;   // the cart now belongs to the order
-    history::clearUndo();                              // a placed order is final, so its history is closed
-    history::clearRedo();
     cout << "Order #" << newNode->orderNo << " placed for " << customer
          << ". Position in line: " << position << ".\n";
 }

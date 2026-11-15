@@ -1,7 +1,6 @@
 // Lab 2 - Doubly Linked List: shopping cart
 #include "lab2_cart.h"
 #include "globals.h"
-#include "lab4_undo_stack.h"
 #include "console_color.h"
 #include "terminal.h"
 #include "display.h"
@@ -57,8 +56,6 @@ void addToCart(Product* p, int qty) {
     }
     putUnits(p, qty);
     p->stockQuantity -= qty;            // reserve the units: the catalog table shows it right away
-    history::pushUndo(ACTION_CART_ADD, p, qty);
-    history::clearRedo();               // a new action ends the redo history
     cout << "Added to cart: " << qty << " x ";
     color::setBrandColor(p->brand);
     cout << p->name;
@@ -71,8 +68,6 @@ void removeFromCart(CartNode* line, int qty) {
     if (qty < 1 || qty > line->quantity) return;
     takeUnits(p, qty);                  // the line may be deleted here, so do not use it afterwards
     p->stockQuantity += qty;
-    history::pushUndo(ACTION_CART_REMOVE, p, qty);
-    history::clearRedo();
     cout << "Removed from cart: " << qty << " x ";
     color::setBrandColor(p->brand);
     cout << p->name;

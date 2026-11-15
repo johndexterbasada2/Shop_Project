@@ -14,6 +14,9 @@ Product* createCatalog(int& size, int& capacity);
 // Returns the (possibly new) catalog array.
 Product* addProductToCatalog(Product* catalog, int& size, int& capacity, const Product& item);
 
+// True when the product sits in the cart or in a waiting order, so it must not be removed.
+bool isProductInUse(const Product* p);
+
 // Rebuilds everything that depends on the catalog array (search tree + brand banner).
 // Call it after the array moves or after a product is added or removed.
 void rebuildIndexes(Product* catalog, int size);

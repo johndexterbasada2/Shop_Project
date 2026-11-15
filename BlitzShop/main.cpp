@@ -340,6 +340,24 @@ static Product* adminMenu(Product* catalog, int& size, int& capacity) {
     }
 }
 
+// The main menu has 10 options, so "10" needs two digits. It is read as a full line
+// (type the number, then Enter), exactly like the sample menu in the project specification.
+// The submenus still react to a single key press. No attempt limit here: it simply asks again.
+static int readMainChoice() {
+    while (true) {
+        cout << "Enter selection (1-10): ";
+        string line;
+        input::readRawLine(line);
+        line = input::trimText(line);
+        if (!line.empty() && line.size() <= 2 && isdigit((unsigned char)line[0]) &&
+            (line.size() == 1 || isdigit((unsigned char)line[1]))) {
+            int value = stoi(line);
+            if (value >= 1 && value <= 10 && to_string(value) == line) return value;
+        }
+        cout << "Invalid input. Please enter a whole number from 1 to 10. Try again.\n";
+    }
+}
+
 static void showMainMenu() {
     term::newScreen(70);
     cout << "======================================================================\n";
@@ -354,7 +372,7 @@ static void showMainMenu() {
     cout << "7. Perform Admin Undo Action (LIFO Stack Pop)\n";
     cout << "8. Display Partner Brand Banner Showcase (Circular List Cycle)\n";
     cout << "9. Sort Inventory Display (By Price, Stock, or Brand)\n";
-    cout << "0. Exit\n";
+    cout << "10. Exit\n";
     cout << "======================================================================\n";
 }
 
@@ -367,20 +385,20 @@ int main() {
 
     while (true) {
         showMainMenu();
-        char key = term::menuKey("Enter selection (0-9): ", "0123456789");
-        if (key == '0') break;
+        int choice = readMainChoice();
+        if (choice == 10) break;
 
         guarded([&] {
-            switch (key) {
-                case '1': viewCatalog(catalog, catalogSize); break;
-                case '2': brandFilter(catalog, catalogSize); break;
-                case '3': keywordSearch(catalog, catalogSize); break;
-                case '4': priceFilter(catalog, catalogSize); break;
-                case '5': cartMenu(catalog, catalogSize); break;
-                case '6': checkoutMenu(); break;
-                case '7': catalog = adminMenu(catalog, catalogSize, catalogCapacity); break;
-                case '8': bannerScreen(); break;
-                case '9': sortMenu(catalog, catalogSize); break;
+            switch (choice) {
+                case 1: viewCatalog(catalog, catalogSize); break;
+                case 2: brandFilter(catalog, catalogSize); break;
+                case 3: keywordSearch(catalog, catalogSize); break;
+                case 4: priceFilter(catalog, catalogSize); break;
+                case 5: cartMenu(catalog, catalogSize); break;
+                case 6: checkoutMenu(); break;
+                case 7: catalog = adminMenu(catalog, catalogSize, catalogCapacity); break;
+                case 8: bannerScreen(); break;
+                case 9: sortMenu(catalog, catalogSize); break;
             }
         });
     }

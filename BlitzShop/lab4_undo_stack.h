@@ -1,4 +1,4 @@
-// Lab 4 - Stack (LIFO): admin undo / redo of inventory actions
+// Lab 4 - Stack (LIFO): admin undo / redo of inventory actions (restock, add product)
 #pragma once
 #include "models.h"
 
@@ -14,7 +14,7 @@ bool popRedo(StackNode& out);
 void clearUndo();                   // frees every node
 void clearRedo();
 
-// Admin actions built on the stacks
+// Admin actions built on the stacks. Customer cart actions are NOT recorded here.
 void restockProduct(Product* p, int amount);   // adds stock, can be undone
 void recordProductAdded(Product* p);           // call after a new product was added to the catalog
 

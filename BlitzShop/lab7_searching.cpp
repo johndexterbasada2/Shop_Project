@@ -42,7 +42,7 @@ bool matchesKeyword(const string& text, const string& keyword) {
         bool numeric = allDigits(w);
         bool found = false;
         for (const string& t : words) {
-            if (numeric ? (t == w) : (t.compare(0, w.size(), w) == 0)) { found = true; break; }
+            if (numeric ? (t == w) : (t.find(w) != string::npos)) { found = true; break; }
         }
         if (!found) return false;
     }
