@@ -4,8 +4,6 @@
 
 using namespace std;
 
-namespace sorting {
-
 int partitionPrice(Product* arr, int low, int high) {
     double pivot = arr[high].price;
     int i = low - 1;
@@ -59,5 +57,3 @@ void insertionSortByBrand(Product* arr, int size) {
         arr[j + 1] = key;
     }
 }
-
-}  // namespace sorting

@@ -6,8 +6,6 @@
 
 using namespace std;
 
-namespace searching {
-
 static string toLower(string s) {
     for (char& c : s) c = (char)tolower((unsigned char)c);
     return s;
@@ -22,7 +20,7 @@ void linearSearchKeyword(Product* catalog, int size, string keyword) {
         if (toLower(catalog[i].name).find(key) != string::npos ||
             toLower(catalog[i].category).find(key) != string::npos ||
             toLower(catalog[i].brand).find(key) != string::npos) {
-            display::displayProduct(&catalog[i]);
+            displayProduct(&catalog[i]);
             found = true;
         }
     }
@@ -33,7 +31,7 @@ void linearSearchKeyword(Product* catalog, int size, string keyword) {
 void binarySearchPriceFilter(Product* catalog, int size, double minPrice, double maxPrice) {
     Product* tempCatalog = new Product[size];
     for (int i = 0; i < size; i++) tempCatalog[i] = catalog[i];
-    sorting::quickSortByPrice(tempCatalog, 0, size - 1);
+    quickSortByPrice(tempCatalog, 0, size - 1);
 
     int left = 0, right = size - 1, startIdx = -1;
     while (left <= right) {
@@ -50,12 +48,10 @@ void binarySearchPriceFilter(Product* catalog, int size, double minPrice, double
     int shown = 0;
     if (startIdx != -1) {
         for (int i = startIdx; i < size && tempCatalog[i].price <= maxPrice; i++) {
-            display::displayProduct(&tempCatalog[i]);
+            displayProduct(&tempCatalog[i]);
             shown++;
         }
     }
     if (shown == 0) cout << "No products in this price range.\n";
     delete[] tempCatalog;
 }
-
-}  // namespace searching

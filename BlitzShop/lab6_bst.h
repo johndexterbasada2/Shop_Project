@@ -2,8 +2,6 @@
 #pragma once
 #include "models.h"
 
-namespace bst {
-
 BSTNode* insertBST(BSTNode* root, Product* p);
 BSTNode* searchBST(BSTNode* root, int id);
 
@@ -12,5 +10,3 @@ BSTNode* searchBST(BSTNode* root, int id);
 BSTNode* buildBalancedBST(Product* catalog, int size);
 
 void destroyBST(BSTNode* root);   // frees every node (post-order)
-
-}  // namespace bst

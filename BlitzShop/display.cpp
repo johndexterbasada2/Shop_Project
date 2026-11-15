@@ -6,12 +6,10 @@
 
 using namespace std;
 
-namespace display {
-
 void displayProduct(Product* p) {
     ostringstream price;
     price << "PHP " << fixed << setprecision(2) << p->price;
-    color::setBrandColor(p->brand);
+    setBrandColor(p->brand);
     cout << left << setw(5) << p->id 
          << setw(30) << p->name 
          << setw(15) << p->category 
@@ -19,7 +17,7 @@ void displayProduct(Product* p) {
          << setw(16) << price.str() 
          << "Stock: " << p->stockQuantity 
          << "\n";
-    color::resetColor();
+    resetColor();
 }
 
 void displayCatalog(Product* catalog, int size) {
@@ -31,5 +29,3 @@ void displayCatalog(Product* catalog, int size) {
     }
     cout << "====================================================================================================\n";
 }
-
-}  // namespace display

@@ -2,12 +2,9 @@
 #include "lab4_undo_stack.h"
 #include "lab2_cart.h"
 #include "globals.h"
-#include "console_color.h"
 #include <iostream>
 
 using namespace std;
-
-namespace history {
 
 static void push(StackNode*& head, ActionType type, Product* p, int amount) {
     head = new StackNode{type, p, amount, head};
@@ -27,21 +24,18 @@ static void clearAll(StackNode*& head) {
     while (pop(head, ignored)) {}
 }
 
-void pushUndo(ActionType type, Product* p, int amount) { push(globals::undoStackHead, type, p, amount); }
-bool popUndo(StackNode& out) { return pop(globals::undoStackHead, out); }
-void pushRedo(ActionType type, Product* p, int amount) { push(globals::redoStackHead, type, p, amount); }
-bool popRedo(StackNode& out) { return pop(globals::redoStackHead, out); }
-void clearUndo() { clearAll(globals::undoStackHead); }
-void clearRedo() { clearAll(globals::redoStackHead); }
+void pushUndo(ActionType type, Product* p, int amount) { push(undoStackHead, type, p, amount); }
+bool popUndo(StackNode& out) { return pop(undoStackHead, out); }
+void pushRedo(ActionType type, Product* p, int amount) { push(redoStackHead, type, p, amount); }
+bool popRedo(StackNode& out) { return pop(redoStackHead, out); }
+void clearUndo() { clearAll(undoStackHead); }
+void clearRedo() { clearAll(redoStackHead); }
 
 void restockProduct(Product* p, int amount) {
     p->stockQuantity += amount;
     pushUndo(ACTION_RESTOCK, p, amount);
     clearRedo();
-    color::setGreen();
-    cout << "Restocked " << p->name << " by " << amount << ". Stock is now " << p->stockQuantity << ".";
-    color::resetColor();
-    cout << "\n";
+    cout << "Restocked " << p->name << " by " << amount << ". Stock is now " << p->stockQuantity << ".\n";
 }
 
 void undoLastAction() {
@@ -53,7 +47,7 @@ void undoLastAction() {
     Product* p = action.product;
 
     if (action.type == ACTION_CART_ADD) {
-        cart::removeLastCartNode();
+        removeLastCartNode();
         p->stockQuantity += action.amount;
         cout << "Undo successful. Removed " << p->name << " from cart. Stock restored to "
              << p->stockQuantity << ".\n";
@@ -84,19 +78,14 @@ void redoLastAction() {
             pushRedo(action.type, p, action.amount);
             return;
         }
-        cart::appendCartNode(p);
+        appendCartNode(p);
         p->stockQuantity -= action.amount;
         cout << "Redo successful. Added " << p->name << " back to cart. Stock is now "
              << p->stockQuantity << ".\n";
     } else {   // ACTION_RESTOCK
         p->stockQuantity += action.amount;
-        color::setGreen();
         cout << "Redo successful. Restocked " << p->name << " by " << action.amount
-             << ". Stock is now " << p->stockQuantity << ".";
-        color::resetColor();
-        cout << "\n";
+             << ". Stock is now " << p->stockQuantity << ".\n";
     }
     pushUndo(action.type, p, action.amount);   // redo-ed action can be undone again
 }
-
-}  // namespace history

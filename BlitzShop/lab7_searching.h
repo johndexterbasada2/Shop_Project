@@ -3,11 +3,5 @@
 #include <string>
 #include "models.h"
 
-using namespace std;
-
-namespace searching {
-
-void linearSearchKeyword(Product* catalog, int size, string keyword);
+void linearSearchKeyword(Product* catalog, int size, std::string keyword);
 void binarySearchPriceFilter(Product* catalog, int size, double minPrice, double maxPrice);
-
-}  // namespace searching

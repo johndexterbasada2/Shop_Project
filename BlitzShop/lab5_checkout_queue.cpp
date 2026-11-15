@@ -8,38 +8,36 @@
 
 using namespace std;
 
-namespace checkout {
-
 static int nextOrderNo = 1;
 
-void enqueueCheckout(CartNode* items) {
-    if (!items) {
+void enqueueCheckout(CartNode* cart) {
+    if (!cart) {
         cout << "Your cart is empty. Add items first.\n";
         return;
     }
-    QueueNode* newNode = new QueueNode{nextOrderNo++, items, nullptr};
+    QueueNode* newNode = new QueueNode{nextOrderNo++, cart, nullptr};
     int position = 1;
-    if (!globals::checkoutQueueTail) {
-        globals::checkoutQueueHead = globals::checkoutQueueTail = newNode;
+    if (!checkoutQueueTail) {
+        checkoutQueueHead = checkoutQueueTail = newNode;
     } else {
-        for (QueueNode* q = globals::checkoutQueueHead; q; q = q->next) position++;
-        globals::checkoutQueueTail->next = newNode;
-        globals::checkoutQueueTail = newNode;
+        for (QueueNode* q = checkoutQueueHead; q; q = q->next) position++;
+        checkoutQueueTail->next = newNode;
+        checkoutQueueTail = newNode;
     }
-    globals::cartHead = globals::cartTail = nullptr;   // the cart now belongs to the order
-    history::clearUndo();                     // a placed order is final, so its history is closed
-    history::clearRedo();
+    cartHead = cartTail = nullptr;   // the cart now belongs to the order
+    clearUndo();                     // a placed order is final, so its history is closed
+    clearRedo();
     cout << "Order #" << newNode->orderNo << " placed. Position in line: " << position << ".\n";
 }
 
 void processCheckoutQueue() {
-    if (!globals::checkoutQueueHead) {
+    if (!checkoutQueueHead) {
         cout << "Checkout queue is empty.\n";
         return;
     }
-    QueueNode* temp = globals::checkoutQueueHead;
-    globals::checkoutQueueHead = globals::checkoutQueueHead->next;
-    if (!globals::checkoutQueueHead) globals::checkoutQueueTail = nullptr;
+    QueueNode* temp = checkoutQueueHead;
+    checkoutQueueHead = checkoutQueueHead->next;
+    if (!checkoutQueueHead) checkoutQueueTail = nullptr;
 
     CartNode* curr = temp->cartHead;
     double grandTotal = 0;
@@ -48,9 +46,9 @@ void processCheckoutQueue() {
         // Stock was already deducted when the item was added to the cart
         grandTotal += curr->product->price;
         cout << "Purchased: ";
-        color::setBrandColor(curr->product->brand);
+        setBrandColor(curr->product->brand);
         cout << curr->product->name;
-        color::resetColor();
+        resetColor();
         cout << " | Remaining Stock: " << curr->product->stockQuantity << "\n";
         CartNode* nextCart = curr->next;
         delete curr;
@@ -61,13 +59,13 @@ void processCheckoutQueue() {
 }
 
 void displayCheckoutQueue() {
-    if (!globals::checkoutQueueHead) {
+    if (!checkoutQueueHead) {
         cout << "Checkout queue is empty.\n";
         return;
     }
     cout << "\n--- Checkout Queue (front to back) ---\n";
     int position = 1;
-    for (QueueNode* q = globals::checkoutQueueHead; q; q = q->next, position++) {
+    for (QueueNode* q = checkoutQueueHead; q; q = q->next, position++) {
         int items = 0;
         double total = 0;
         for (CartNode* c = q->cartHead; c; c = c->next) { items++; total += c->product->price; }
@@ -77,18 +75,16 @@ void displayCheckoutQueue() {
 }
 
 void destroyCheckoutQueue() {
-    while (globals::checkoutQueueHead) {
-        QueueNode* nextOrder = globals::checkoutQueueHead->next;
-        CartNode* c = globals::checkoutQueueHead->cartHead;
+    while (checkoutQueueHead) {
+        QueueNode* nextOrder = checkoutQueueHead->next;
+        CartNode* c = checkoutQueueHead->cartHead;
         while (c) {
             CartNode* nextCart = c->next;
             delete c;
             c = nextCart;
         }
-        delete globals::checkoutQueueHead;
-        globals::checkoutQueueHead = nextOrder;
+        delete checkoutQueueHead;
+        checkoutQueueHead = nextOrder;
     }
-    globals::checkoutQueueTail = nullptr;
+    checkoutQueueTail = nullptr;
 }
-
-}  // namespace checkout

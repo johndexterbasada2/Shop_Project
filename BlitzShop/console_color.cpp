@@ -1,27 +1,19 @@
 #include "console_color.h"
-#include "terminal.h"
+#include <windows.h>
 
 using namespace std;
 
-namespace color {
-
-// The platform code (Windows API or ANSI codes) lives in terminal.cpp.
 void setBrandColor(string brand) {
-    if (brand == "Sony") term::setColor(term::BLUE);
-    else if (brand == "Microsoft") term::setColor(term::GREEN);
-    else if (brand == "Nintendo") term::setColor(term::RED);
-    else if (brand == "The Pokemon Company") term::setColor(term::YELLOW);
-    else if (brand == "Epic Games") term::setColor(term::CYAN);
-    else if (brand == "Roblox Corporation") term::setColor(term::MAGENTA);
-    else term::setColor(term::DEFAULT);
-}
-
-void setGreen() {
-    term::setColor(term::GREEN);
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (brand == "Sony") SetConsoleTextAttribute(hConsole, 9);
+    else if (brand == "Microsoft") SetConsoleTextAttribute(hConsole, 10);
+    else if (brand == "Nintendo") SetConsoleTextAttribute(hConsole, 12);
+    else if (brand == "The Pokemon Company") SetConsoleTextAttribute(hConsole, 14);
+    else if (brand == "Epic Games") SetConsoleTextAttribute(hConsole, 11);
+    else if (brand == "Roblox Corporation") SetConsoleTextAttribute(hConsole, 13);
+    else SetConsoleTextAttribute(hConsole, 7);
 }
 
 void resetColor() {
-    term::setColor(term::DEFAULT);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 }
-
-}  // namespace color

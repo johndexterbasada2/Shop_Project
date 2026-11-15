@@ -3,33 +3,31 @@
 #include "globals.h"
 #include "lab4_undo_stack.h"
 #include "console_color.h"
-#include "terminal.h"
+#include "input_utils.h"
 #include <iostream>
 #include <iomanip>
 
 using namespace std;
 
-namespace cart {
-
 void appendCartNode(Product* p) {
     CartNode* newNode = new CartNode{p, nullptr, nullptr};
-    if (globals::cartHead == nullptr) {
-        globals::cartHead = globals::cartTail = newNode;
+    if (cartHead == nullptr) {
+        cartHead = cartTail = newNode;
     } else {
-        globals::cartTail->next = newNode;
-        newNode->prev = globals::cartTail;
-        globals::cartTail = newNode;
+        cartTail->next = newNode;
+        newNode->prev = cartTail;
+        cartTail = newNode;
     }
 }
 
 bool removeLastCartNode() {
-    if (!globals::cartTail) return false;
-    CartNode* temp = globals::cartTail;
-    if (globals::cartTail->prev) {
-        globals::cartTail = globals::cartTail->prev;
-        globals::cartTail->next = nullptr;
+    if (!cartTail) return false;
+    CartNode* temp = cartTail;
+    if (cartTail->prev) {
+        cartTail = cartTail->prev;
+        cartTail->next = nullptr;
     } else {
-        globals::cartHead = globals::cartTail = nullptr;
+        cartHead = cartTail = nullptr;
     }
     delete temp;
     return true;
@@ -42,28 +40,28 @@ void addToCart(Product* p) {
     }
     appendCartNode(p);
     p->stockQuantity--;                 // reserve one unit: the catalog table shows it right away
-    history::pushUndo(ACTION_CART_ADD, p, 1);
-    history::clearRedo();                        // a new action ends the redo history
+    pushUndo(ACTION_CART_ADD, p, 1);
+    clearRedo();                        // a new action ends the redo history
     cout << "Added to cart: ";
-    color::setBrandColor(p->brand);
+    setBrandColor(p->brand);
     cout << p->name;
-    color::resetColor();
+    resetColor();
     cout << "\n";
 }
 
 void displayCart() {
-    if (!globals::cartHead) {
+    if (!cartHead) {
         cout << "Shopping cart is empty.\n";
         return;
     }
     cout << "\n--- Shopping Cart ---\n";
-    CartNode* curr = globals::cartHead;
+    CartNode* curr = cartHead;
     double total = 0;
     while (curr) {
         cout << "- ";
-        color::setBrandColor(curr->product->brand);
+        setBrandColor(curr->product->brand);
         cout << curr->product->name;
-        color::resetColor();
+        resetColor();
         cout << " | PHP " << fixed << setprecision(2) << curr->product->price << "\n";
         total += curr->product->price;
         curr = curr->next;
@@ -72,51 +70,48 @@ void displayCart() {
 }
 
 // Doubly linked list navigation: next moves along ->next, previous moves along ->prev
-// One key press per move (no Enter). The screen is redrawn for every item.
 void browseCart() {
-    if (!globals::cartHead) {
-        term::newScreen(70);
+    if (!cartHead) {
         cout << "Shopping cart is empty.\n";
-        term::pause();
         return;
     }
     int total = 0;
-    for (CartNode* c = globals::cartHead; c; c = c->next) total++;
+    for (CartNode* c = cartHead; c; c = c->next) total++;
 
-    CartNode* curr = globals::cartHead;
+    CartNode* curr = cartHead;
     int pos = 1;
-    string note;
     while (true) {
-        term::newScreen(70);
-        cout << term::centered("--- Browse Cart ---") << "\n\n";
-        cout << "Item " << pos << " of " << total << ": ";
-        color::setBrandColor(curr->product->brand);
+        cout << "\nItem " << pos << " of " << total << ": ";
+        setBrandColor(curr->product->brand);
         cout << curr->product->name;
-        color::resetColor();
+        resetColor();
         cout << " (" << curr->product->brand << ") | PHP "
              << fixed << setprecision(2) << curr->product->price << "\n";
-        if (!note.empty()) cout << "\n" << note << "\n";
-        note.clear();
 
-        char cmd = term::menuKey("\n[N]ext  [P]revious  [Q]uit: ", "npq");
-        if (cmd == 'q') return;
-        if (cmd == 'n') {
+        string cmd;
+        while (true) {
+            cmd = readText("[N]ext  [P]revious  [Q]uit: ");
+            for (char& ch : cmd) ch = (char)tolower((unsigned char)ch);
+            if (cmd == "n" || cmd == "p" || cmd == "q") break;
+            cout << "Invalid input. Type N, P, or Q. Try again.\n";
+        }
+
+        if (cmd == "q") return;
+        if (cmd == "n") {
             if (curr->next) { curr = curr->next; pos++; }
-            else note = "You are at the last item.";
+            else cout << "You are at the last item.\n";
         } else {
             if (curr->prev) { curr = curr->prev; pos--; }
-            else note = "You are at the first item.";
+            else cout << "You are at the first item.\n";
         }
     }
 }
 
 void destroyCart() {
-    while (globals::cartHead) {
-        CartNode* next = globals::cartHead->next;
-        delete globals::cartHead;
-        globals::cartHead = next;
+    while (cartHead) {
+        CartNode* next = cartHead->next;
+        delete cartHead;
+        cartHead = next;
     }
-    globals::cartTail = nullptr;
+    cartTail = nullptr;
 }
-
-}  // namespace cart

@@ -1,8 +1,6 @@
 // Lab 6 - Binary Search Tree: product lookup by ID
 #include "lab6_bst.h"
 
-namespace bst {
-
 BSTNode* insertBST(BSTNode* root, Product* p) {
     if (root == nullptr) {
         BSTNode* newNode = new BSTNode{p, nullptr, nullptr};
@@ -55,5 +53,3 @@ void destroyBST(BSTNode* root) {
     destroyBST(root->right);
     delete root;
 }
-
-}  // namespace bst
