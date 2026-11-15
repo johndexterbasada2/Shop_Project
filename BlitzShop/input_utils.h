@@ -7,6 +7,7 @@
 #include <cerrno>
 #include <cctype>
 #include <climits>
+#include "terminal.h"
 
 inline bool readRawLine(std::string& out) {
     if (!std::getline(std::cin, out)) {
@@ -14,6 +15,7 @@ inline bool readRawLine(std::string& out) {
         std::cout << "\nInput closed. Exiting program.\n";
         std::exit(0);
     }
+    term::lineStartReset();   // the Enter key was echoed by the terminal, so the next output needs its margin again
     return true;
 }
 
