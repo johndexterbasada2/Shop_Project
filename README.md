@@ -12,6 +12,7 @@ A console-based C++ program (CS201 Data Structures & Algorithms final output) th
 - Browse the full product catalog in a color-coded table (each brand has its own color). **The Prod_ID column is shown in the normal color while the rest of the row uses the brand color**
 - **Centered screen:** every menu and table is centered in the terminal, and the screen is cleared each time you pick an option
 - **Menus:** the main menu follows the project specification (options 1–9 and **10. Exit**), so you type the number and press Enter. Every submenu reacts to a single key press (no Enter). Text and number prompts use Enter
+- **Stock color gradient:** the `Stock:` number in every catalog table changes color as units run out: green (21 or more), yellow (11–20), orange (6–10), red (1–5) and dark red (0). A legend under the catalog explains the colors, and the limits are in `setStockColor()` in `console_color.cpp`
 - **Green stock messages:** restocking (and redoing a restock) shows its message in green
 - Brand integration everywhere: the brand shows in the catalog table, the brand filter, keyword search (matches name, category **and brand**) and the partner brand banner
 - Shopping cart (doubly linked list) with **keyword add**, **quantity**, **add several items in one go**, **remove an item**, every item shown in **one table**, and **browse forward and backward** (the current row is marked with `>`)
@@ -63,7 +64,7 @@ Other files: `models.h` (structs), `globals.h/.cpp` (shared pointers), `display.
 
 | # | Option | Notes |
 |---|---|---|
-| 1 | View Complete Catalog | Shows Prod_ID and current stock |
+| 1 | View Complete Catalog | Shows Prod_ID and current stock, colored from green (plenty) to red (almost gone) |
 | 2 | Filter by Brand | The brands are shown in a centered table (new brands follow at the bottom). Type just a keyword (`son`, `nin`, `pokemon`), not case-sensitive |
 | 3 | Search by Keyword | Linear search, not case-sensitive. Matches parts of words in the name, category and brand (`box` finds Xbox, `ps5` finds the PS5 console). A number must match a whole word, so `2` finds Spider-Man 2 but not Fortnite 2800 |
 | 4 | Filter by Price Range | Binary search, max must be at least min |

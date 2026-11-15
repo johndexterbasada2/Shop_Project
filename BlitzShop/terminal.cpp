@@ -36,10 +36,10 @@ namespace {
 const char kColorMarker = '\x01';   // inside the text stream: next byte is a color id
 
 #ifdef _WIN32
-const WORD kWinColor[] = {7, 9, 10, 12, 14, 11, 13};
+const WORD kWinColor[] = {7, 9, 10, 12, 14, 11, 13, 6, 4};
 bool g_vtEnabled = false;
 #else
-const int kAnsiColor[] = {0, 94, 92, 91, 93, 96, 95};
+const int kAnsiColor[] = {0, 94, 92, 91, 93, 96, 95, 33, 31};
 termios g_savedTermios;
 volatile sig_atomic_t g_rawMode = 0;
 #endif

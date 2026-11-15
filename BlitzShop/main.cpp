@@ -83,6 +83,7 @@ static bool addNewProduct(Product*& catalog, int& size, int& capacity) {
 static void viewCatalog(Product* catalog, int size) {
     term::newScreen(display::tableWidth());
     display::displayCatalog(catalog, size);
+    display::displayStockLegend();
     term::pause();
 }
 
@@ -160,6 +161,7 @@ static void sortMenu(Product* catalog, int size) {
         else if (key == '2') sorting::quickSortByStock(sorted, 0, size - 1);
         else sorting::insertionSortByBrand(sorted, size);
         display::displayCatalog(sorted, size);
+        display::displayStockLegend();
         delete[] sorted;
         term::pause();   // then back to the sort menu
     }

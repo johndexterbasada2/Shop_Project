@@ -7,7 +7,7 @@ using namespace std;
 
 namespace term {
 
-enum Color { DEFAULT = 0, BLUE, GREEN, RED, YELLOW, CYAN, MAGENTA };
+enum Color { DEFAULT = 0, BLUE, GREEN, RED, YELLOW, CYAN, MAGENTA, ORANGE, DARK_RED };
 
 // Call once at the start of main. Every cout line after this is centered.
 void init();

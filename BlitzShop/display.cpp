@@ -54,9 +54,9 @@ static void printRow(const string& number, int numberWidth, Product* p, int idWi
     cout << setw(W_NAME) << fitText(p->name, W_NAME)
          << setw(W_CAT) << fitText(p->category, W_CAT)
          << setw(W_BRAND) << fitText(p->brand, W_BRAND)
-         << setw(W_PRICE) << money(p->price)
-         << "Stock: " << p->stockQuantity
-         << "\n";
+         << setw(W_PRICE) << money(p->price);
+    color::setStockColor(p->stockQuantity);   // the stock text goes from green to red as it runs out
+    cout << "Stock: " << p->stockQuantity << "\n";
     color::resetColor();
 }
 
@@ -76,6 +76,21 @@ void displayCatalog(Product* catalog, int size, bool showId) {
     displayHeader(showId);
     for (int i = 0; i < size; i++) displayProduct(&catalog[i], showId);
     displayFooter(showId);
+}
+
+// One line that explains the stock colors under a catalog table
+void displayStockLegend() {
+    cout << "Stock level:  ";
+    color::setStockColor(21);  cout << "21+";
+    color::resetColor();       cout << "   ";
+    color::setStockColor(15);  cout << "11-20";
+    color::resetColor();       cout << "   ";
+    color::setStockColor(8);   cout << "6-10";
+    color::resetColor();       cout << "   ";
+    color::setStockColor(3);   cout << "1-5";
+    color::resetColor();       cout << "   ";
+    color::setStockColor(0);   cout << "0 (out of stock)";
+    color::resetColor();       cout << "\n";
 }
 
 void displayPickList(Product** items, int count) {
