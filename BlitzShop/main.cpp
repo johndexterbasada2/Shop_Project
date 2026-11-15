@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "models.h"
 #include "globals.h"
@@ -12,35 +13,43 @@
 #include "lab3_brand_banner.h"
 #include "lab8_sorting.h"
 #include "lab7_searching.h"
+#include "console_color.h"
 #include "input_utils.h"
 #include "terminal.h"
 
 using namespace std;
 
-// Case-insensitive compare, returns the catalog's official brand spelling ("" if none)
-static string findBrand(Product* catalog, int size, const string& input) {
-    auto lower = [](string s) { for (char& c : s) c = (char)tolower((unsigned char)c); return s; };
-    for (int i = 0; i < size; i++)
-        if (lower(catalog[i].brand) == lower(input)) return catalog[i].brand;
-    return "";
-}
-
-// Asks for a product ID until it exists (0 cancels). Returns nullptr if cancelled.
-static Product* askForProduct(const string& prompt) {
-    while (true) {
-        int id = readInt(prompt, 0, INT_MAX);
-        if (id == 0) return nullptr;
-        BSTNode* result = searchBST(bstRoot, id);   // Lab 6: O(log n) lookup
-        if (result) return result->product;
-        cout << "Invalid input. Product ID not found. Try again.\n";
+// Runs one menu action. After 3 wrong answers in a row the action is cancelled and the
+// program goes back to the menu it came from.
+template <typename Action>
+static void guarded(Action action) {
+    try {
+        action();
+    } catch (const input::TooManyAttempts&) {
+        cout << "\nToo many invalid attempts. Returning to the menu.\n";
+        term::pause();
     }
 }
 
-// Rebuilds everything that depends on the catalog array (tree + brand banner)
-static void rebuildIndexes(Product* catalog, int size) {
-    destroyBST(bstRoot);
-    bstRoot = buildBalancedBST(catalog, size);
-    initBrandBanner(catalog, size);
+// Case-insensitive compare, returns the catalog's official brand spelling ("" if none)
+static string findBrand(Product* catalog, int size, const string& text) {
+    auto lower = [](string s) { for (char& c : s) c = (char)tolower((unsigned char)c); return s; };
+    for (int i = 0; i < size; i++)
+        if (lower(catalog[i].brand) == lower(text)) return catalog[i].brand;
+    return "";
+}
+
+// Admin only: asks for a product ID until it exists (0 cancels). Returns nullptr if cancelled.
+// Wrong IDs and wrong typing share one counter, so it is 3 failed tries in total.
+static Product* askForProduct(const string& prompt) {
+    int attempts = 0;
+    while (true) {
+        int id = input::readInt(prompt, 0, INT_MAX, attempts);
+        if (id == 0) return nullptr;
+        BSTNode* result = bst::searchBST(globals::bstRoot, id);   // Lab 6: O(log n) lookup
+        if (result) return result->product;
+        input::invalidEntry("Invalid input. Product ID not found. Try again.", attempts);
+    }
 }
 
 // Admin: add a brand-new product. The catalog array grows automatically when it is full.
@@ -49,46 +58,207 @@ static Product* addNewProduct(Product* catalog, int& size, int& capacity) {
     item.id = 0;
     for (int i = 0; i < size; i++) if (catalog[i].id > item.id) item.id = catalog[i].id;
     item.id++;
-    item.name = readText("Product name: ");
-    item.category = readText("Category: ");
-    string brand = readText("Brand: ");
+    item.name = input::readText("Product name: ");
+    item.category = input::readText("Category: ");
+    string brand = input::readText("Brand: ");
     string existing = findBrand(catalog, size, brand);
     item.brand = existing.empty() ? brand : existing;
-    item.price = readDouble("Price (PHP): ", 0.01);
-    item.stockQuantity = readInt("Starting stock (0-10000): ", 0, 10000);
+    item.price = input::readDouble("Price (PHP): ", 0.01);
+    item.stockQuantity = input::readInt("Starting stock (0-10000): ", 0, 10000);
 
-    catalog = addProductToCatalog(catalog, size, capacity, item);
-    rebuildIndexes(catalog, size);   // the array may have moved, so the tree is rebuilt
+    catalog = inventory::addProductToCatalog(catalog, size, capacity, item);
+    inventory::rebuildIndexes(catalog, size);   // the array may have moved, so the tree is rebuilt
+    history::recordProductAdded(&catalog[size - 1]);   // so Undo can take it out again
     cout << "Added product #" << item.id << ":\n";
-    displayProduct(&catalog[size - 1]);
+    display::displayHeader(true);
+    display::displayProduct(&catalog[size - 1], true);
+    display::displayFooter(true);
     return catalog;
+}
+
+// ---------------------------------------------------------------- customer screens
+
+static void viewCatalog(Product* catalog, int size) {
+    term::newScreen(display::tableWidth());
+    display::displayCatalog(catalog, size);
+    term::pause();
+}
+
+// Filter by brand: the brands are shown in a table and the customer types just a keyword
+static void brandFilter(Product* catalog, int size) {
+    term::newScreen(display::tableWidth());
+    cout << term::centered("--- Filter by Brand ---") << "\n\n";
+    banner::showBrandTable();
+    cout << "\n";
+
+    vector<string> matched(size);
+    int count = 0;
+    int attempts = 0;
+    while (true) {
+        string keyword = input::readText(term::centered("Enter a brand keyword (e.g. son, nin, pokemon): "), attempts);
+        count = searching::matchBrands(catalog, size, keyword, matched.data());
+        if (count > 0) break;
+        input::invalidEntry("No brand matches '" + keyword + "'. Pick a keyword from the table. Try again.", attempts);
+    }
+
+    string names;
+    for (int i = 0; i < count; i++) names += (i ? ", " : "") + matched[i];
+    cout << "\n--- Filtered by " << names << " ---\n";
+    display::displayHeader();
+    for (int i = 0; i < size; i++) {
+        for (int k = 0; k < count; k++) {
+            if (catalog[i].brand == matched[k]) { display::displayProduct(&catalog[i]); break; }
+        }
+    }
+    display::displayFooter();
+    term::pause();
+}
+
+static void keywordSearch(Product* catalog, int size) {
+    term::newScreen(display::tableWidth());
+    cout << term::centered("--- Search Products ---") << "\n\n";
+    string keyword = input::readText("Enter keyword: ");
+    searching::linearSearchKeyword(catalog, size, keyword);
+    term::pause();
+}
+
+static void priceFilter(Product* catalog, int size) {
+    term::newScreen(display::tableWidth());
+    cout << term::centered("--- Filter by Price Range ---") << "\n\n";
+    double minP = input::readDouble("Enter minimum price (PHP): ", 0);
+    double maxP;
+    int attempts = 0;
+    while (true) {
+        maxP = input::readDouble("Enter maximum price (PHP): ", 0, attempts);
+        if (maxP >= minP) break;
+        input::invalidEntry("Invalid input. Maximum price must be greater than or equal to the minimum. Try again.", attempts);
+    }
+    searching::binarySearchPriceFilter(catalog, size, minP, maxP);
+    term::pause();
+}
+
+static void sortMenu(Product* catalog, int size) {
+    while (true) {
+        term::newScreen(44);
+        cout << term::centered("--- Sort Inventory ---") << "\n";
+        cout << "1. Sort by Price (Ascending)\n2. Sort by Stock (Descending)\n3. Sort by Brand (Alphabetical)\n4. Back\n";
+        char key = term::menuKey("Selection (1-4): ", "1234");
+        if (key == '4') return;
+
+        term::newScreen(display::tableWidth());
+        // Sort a copy for display so cart/undo pointers still reference the real products
+        Product* sorted = new Product[size];
+        for (int i = 0; i < size; i++) sorted[i] = catalog[i];
+        if (key == '1') sorting::quickSortByPrice(sorted, 0, size - 1);
+        else if (key == '2') sorting::quickSortByStock(sorted, 0, size - 1);
+        else sorting::insertionSortByBrand(sorted, size);
+        display::displayCatalog(sorted, size);
+        delete[] sorted;
+        term::pause();   // then back to the sort menu
+    }
+}
+
+static void bannerScreen() {
+    term::newScreen(0);
+    banner::showBrandBanner();
+    term::pause();
+}
+
+// ---------------------------------------------------------------- cart
+
+// The customer types a keyword, picks the product if several match, then chooses a quantity.
+// "Add another item?" keeps the customer here, so many items can be added in one go.
+static void addToCartFlow(Product* catalog, int size) {
+    while (true) {
+        term::newScreen(display::tableWidth(true));
+        cout << term::centered("--- Add Items to Cart ---") << "\n\n";
+        display::displayCatalog(catalog, size);
+        cout << "\n";
+
+        vector<Product*> matches(size);
+        int count = 0;
+        int attempts = 0;
+        while (true) {
+            string keyword = input::readText("Enter a product keyword (0 to go back): ", attempts);
+            if (keyword == "0") return;
+            count = searching::findProducts(catalog, size, keyword, matches.data());
+            if (count > 0) break;
+            input::invalidEntry("No product matches '" + keyword + "'. Try again.", attempts);
+        }
+
+        Product* chosen = matches[0];
+        if (count > 1) {
+            cout << "\n";
+            display::displayPickList(matches.data(), count);
+            cout << "\n";
+            int pick = input::readInt("Enter the item number (0 to go back): ", 0, count);
+            if (pick == 0) return;
+            chosen = matches[pick - 1];
+        }
+
+        cout << "\nSelected: ";
+        color::setBrandColor(chosen->brand);
+        cout << chosen->name;
+        color::resetColor();
+        cout << " (" << chosen->stockQuantity << " in stock)\n";
+
+        if (chosen->stockQuantity <= 0) {
+            cout << "Out of stock.\n";
+        } else {
+            int qty = input::readInt("Quantity (1-" + to_string(chosen->stockQuantity) + "): ", 1, chosen->stockQuantity);
+            cart::addToCart(chosen, qty);
+        }
+
+        cout << "\n";
+        if (term::menuKey("Add another item? [Y]es / [N]o: ", "yn") == 'n') return;
+    }
+}
+
+static void removeFromCartFlow() {
+    term::newScreen(display::tableWidth());
+    cout << term::centered("--- Remove Item from Cart ---") << "\n\n";
+    if (!globals::cartHead) {
+        cout << "Shopping cart is empty.\n";
+        term::pause();
+        return;
+    }
+    cart::displayCart(true);
+    cout << "\n";
+    int number = input::readInt("Enter the item number to remove (0 to go back): ", 0, cart::lineCount());
+    if (number == 0) return;
+
+    CartNode* line = cart::lineAt(number);
+    int qty = line->quantity;
+    if (qty > 1) qty = input::readInt("How many to remove (1-" + to_string(qty) + "): ", 1, qty);
+    cart::removeFromCart(line, qty);
+    term::pause();
 }
 
 static void cartMenu(Product* catalog, int size) {
     while (true) {
         term::newScreen(46);
         cout << term::centered("--- Shopping Cart ---") << "\n";
-        cout << "1. Add item\n2. View cart\n3. Browse cart (Previous / Next)\n4. Back\n";
-        char key = term::menuKey("Selection (1-4): ", "1234");
-        if (key == '4') return;
+        cout << "1. Add items\n2. Remove an item\n3. View cart\n4. Browse cart (Previous / Next)\n5. Back\n";
+        char key = term::menuKey("Selection (1-5): ", "12345");
+        if (key == '5') return;
 
-        if (key == '1') {
-            term::newScreen(100);
-            displayCatalog(catalog, size);   // the catalog stays on screen so the IDs can be seen
-            cout << "\n";
-            Product* p = askForProduct("Enter Product ID to add (0 to cancel): ");
-            if (!p) continue;
-            addToCart(p);
-        } else if (key == '2') {
-            term::newScreen(70);
-            displayCart();
-        } else {
-            browseCart();   // draws its own screens
-            continue;
-        }
-        term::pause();
+        guarded([&] {
+            if (key == '1') {
+                addToCartFlow(catalog, size);
+            } else if (key == '2') {
+                removeFromCartFlow();
+            } else if (key == '3') {
+                term::newScreen(display::tableWidth());
+                cart::displayCart();
+                term::pause();
+            } else {
+                cart::browseCart();   // draws its own screens
+            }
+        });
     }
 }
+
+// ---------------------------------------------------------------- checkout
 
 static void checkoutMenu() {
     while (true) {
@@ -98,19 +268,31 @@ static void checkoutMenu() {
         char key = term::menuKey("Selection (1-4): ", "1234");
         if (key == '4') return;
 
-        if (key == '1') {
-            term::newScreen(0);
-            enqueueCheckout(cartHead);
-        } else if (key == '2') {
-            term::newScreen(70);
-            processCheckoutQueue();
-        } else {
-            term::newScreen(70);
-            displayCheckoutQueue();
-        }
-        term::pause();
+        guarded([&] {
+            term::newScreen(display::tableWidth());
+            if (key == '1') {
+                cout << term::centered("--- Place Order ---") << "\n\n";
+                bool hasItems = globals::cartHead != nullptr;
+                if (hasItems) {
+                    cart::displayCart();
+                    cout << "\n";
+                }
+                checkout::enqueueCheckout(globals::cartHead);
+                if (hasItems) {
+                    cout << "\n";
+                    checkout::displayCheckoutQueue();   // the new order shows up behind the earlier ones
+                }
+            } else if (key == '2') {
+                checkout::processCheckoutQueue();
+            } else {
+                checkout::displayCheckoutQueue();
+            }
+            term::pause();
+        });
     }
 }
+
+// ---------------------------------------------------------------- admin
 
 static Product* adminMenu(Product* catalog, int& size, int& capacity) {
     while (true) {
@@ -120,25 +302,27 @@ static Product* adminMenu(Product* catalog, int& size, int& capacity) {
         char key = term::menuKey("Selection (1-5): ", "12345");
         if (key == '5') return catalog;
 
-        if (key == '1') {
-            term::newScreen(0);
-            undoLastAction();
-        } else if (key == '2') {
-            term::newScreen(0);
-            redoLastAction();
-        } else if (key == '3') {
-            term::newScreen(100);
-            displayCatalog(catalog, size);
-            cout << "\n";
-            Product* p = askForProduct("Enter Product ID to restock (0 to cancel): ");
-            if (!p) continue;
-            restockProduct(p, readInt("Units to add (1-1000): ", 1, 1000));
-        } else {
-            term::newScreen(100);
-            cout << term::centered("--- Add a New Product ---") << "\n\n";
-            catalog = addNewProduct(catalog, size, capacity);
-        }
-        term::pause();
+        guarded([&] {
+            if (key == '1') {
+                term::newScreen(0);
+                history::undoLastAction(catalog, size, capacity);
+            } else if (key == '2') {
+                term::newScreen(0);
+                history::redoLastAction(catalog, size, capacity);
+            } else if (key == '3') {
+                term::newScreen(display::tableWidth(true));
+                display::displayCatalog(catalog, size, true);   // admins see the Product ID
+                cout << "\n";
+                Product* p = askForProduct("Enter Product ID to restock (0 to cancel): ");
+                if (!p) return;
+                history::restockProduct(p, input::readInt("Units to add (1-1000): ", 1, 1000));
+            } else {
+                term::newScreen(display::tableWidth(true));
+                cout << term::centered("--- Add a New Product ---") << "\n\n";
+                catalog = addNewProduct(catalog, size, capacity);
+            }
+            term::pause();
+        });
     }
 }
 
@@ -164,86 +348,38 @@ int main() {
     term::init();
 
     int catalogSize = 0, catalogCapacity = 0;
-    Product* catalog = createCatalog(catalogSize, catalogCapacity);   // Lab 1
-    rebuildIndexes(catalog, catalogSize);                              // Lab 6 + Lab 3
+    Product* catalog = inventory::createCatalog(catalogSize, catalogCapacity);   // Lab 1
+    inventory::rebuildIndexes(catalog, catalogSize);                              // Lab 6 + Lab 3
 
     while (true) {
         showMainMenu();
         char key = term::menuKey("Enter selection (0-9): ", "0123456789");
         if (key == '0') break;
-        int choice = key - '0';
 
-        // 5, 6 and 7 open their own menus and manage their own screens
-        if (choice == 5) { cartMenu(catalog, catalogSize); continue; }
-        if (choice == 6) { checkoutMenu(); continue; }
-        if (choice == 7) { catalog = adminMenu(catalog, catalogSize, catalogCapacity); continue; }
-
-        if (choice == 9) {
-            term::newScreen(44);
-            cout << term::centered("--- Sort Inventory ---") << "\n";
-            cout << "1. Sort by Price (Ascending)\n2. Sort by Stock (Descending)\n3. Sort by Brand (Alphabetical)\n";
-            char sortKey = term::menuKey("Selection (1-3): ", "123");
-            term::newScreen(100);
-            // Sort a copy for display so cart/undo pointers still reference the real products
-            Product* sorted = new Product[catalogSize];
-            for (int i = 0; i < catalogSize; i++) sorted[i] = catalog[i];
-            if (sortKey == '1') quickSortByPrice(sorted, 0, catalogSize - 1);
-            else if (sortKey == '2') quickSortByStock(sorted, 0, catalogSize - 1);
-            else insertionSortByBrand(sorted, catalogSize);
-            displayCatalog(sorted, catalogSize);
-            delete[] sorted;
-            term::pause();
-            continue;
-        }
-
-        if (choice == 8) term::newScreen(0);
-        else term::newScreen(100);
-
-        if (choice == 1) {
-            displayCatalog(catalog, catalogSize);
-        }
-        else if (choice == 2) {
-            cout << "Available brands: " << brandListText() << "\n\n";
-            string brandObj;
-            while (true) {
-                brandObj = findBrand(catalog, catalogSize, readText("Enter Brand Name: "));
-                if (brandObj != "") break;
-                cout << "Invalid brand. Available: " << brandListText() << ". Try again.\n";
+        guarded([&] {
+            switch (key) {
+                case '1': viewCatalog(catalog, catalogSize); break;
+                case '2': brandFilter(catalog, catalogSize); break;
+                case '3': keywordSearch(catalog, catalogSize); break;
+                case '4': priceFilter(catalog, catalogSize); break;
+                case '5': cartMenu(catalog, catalogSize); break;
+                case '6': checkoutMenu(); break;
+                case '7': catalog = adminMenu(catalog, catalogSize, catalogCapacity); break;
+                case '8': bannerScreen(); break;
+                case '9': sortMenu(catalog, catalogSize); break;
             }
-            cout << "\n--- Filtered by " << brandObj << " ---\n";
-            for (int i = 0; i < catalogSize; i++) {
-                if (catalog[i].brand == brandObj) displayProduct(&catalog[i]);
-            }
-        }
-        else if (choice == 3) {
-            string kw = readText("Enter keyword: ");
-            linearSearchKeyword(catalog, catalogSize, kw);
-        }
-        else if (choice == 4) {
-            double minP = readDouble("Enter minimum price (PHP): ", 0);
-            double maxP;
-            while (true) {
-                maxP = readDouble("Enter maximum price (PHP): ", 0);
-                if (maxP >= minP) break;
-                cout << "Invalid input. Maximum price must be greater than or equal to the minimum. Try again.\n";
-            }
-            binarySearchPriceFilter(catalog, catalogSize, minP, maxP);
-        }
-        else if (choice == 8) {
-            showBrandBanner();
-        }
-        term::pause();
+        });
     }
 
     // ---- Free every dynamic structure (zero memory leaks) ----
-    destroyCart();            // Lab 2
-    destroyCheckoutQueue();   // Lab 5
-    clearUndo();              // Lab 4
-    clearRedo();
-    destroyBST(bstRoot);      // Lab 6
-    bstRoot = nullptr;
-    destroyBrandBanner();     // Lab 3
-    delete[] catalog;         // Lab 1
+    cart::destroyCart();                 // Lab 2
+    checkout::destroyCheckoutQueue();    // Lab 5
+    history::clearUndo();                // Lab 4
+    history::clearRedo();
+    bst::destroyBST(globals::bstRoot);   // Lab 6
+    globals::bstRoot = nullptr;
+    banner::destroyBrandBanner();        // Lab 3
+    delete[] catalog;                    // Lab 1
     term::newScreen(0);
     cout << "Thank you for shopping at BlitzShop. Goodbye!\n\n";
     term::shutdown();

@@ -3,6 +3,8 @@
 
 using namespace std;
 
+namespace color {
+
 // The platform code (Windows API or ANSI codes) lives in terminal.cpp.
 void setBrandColor(string brand) {
     if (brand == "Sony") term::setColor(term::BLUE);
@@ -21,3 +23,5 @@ void setGreen() {
 void resetColor() {
     term::setColor(term::DEFAULT);
 }
+
+}  // namespace color

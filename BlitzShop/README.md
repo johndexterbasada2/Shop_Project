@@ -9,15 +9,18 @@ A console-based C++ program (CS201 Data Structures & Algorithms final output) th
 
 ## Features
 
-- Browse the full product catalog in a color-coded table (each brand has its own color)
+- Browse the full product catalog in a color-coded table (each brand has its own color). **Customers never see the Product ID**, only the admin screens show it
+- **Centered screen:** every menu and table is centered in the terminal, and the screen is cleared each time you pick an option
+- **One-key menus:** menu choices are accepted the moment you press the key (no Enter). Text and number prompts still use Enter
+- **Green stock messages:** restocking (and redoing a restock) shows its message in green
 - Brand integration everywhere: the brand shows in the catalog table, the brand filter, keyword search (matches name, category **and brand**) and the partner brand banner
-- Shopping cart you can add to, view, and **browse forward and backward** (doubly linked list)
+- Shopping cart (doubly linked list) with **keyword add** (no Product ID), **quantity**, **add several items in one go**, **remove an item**, and **browse forward and backward**
 - **Live stock tracking:** adding an item to the cart reduces its stock right away, and Undo returns it
-- **Admin Undo and Redo** for cart additions and restocking (two stacks)
-- **Checkout queue** that holds several orders and serves them first-come, first-served
+- **Admin Undo and Redo** (two stacks) for cart additions, cart removals, restocking and **added products**
+- **Checkout queue** that holds several orders, serves them first-come, first-served, and shows every waiting order (customer and items) plus the completed orders
 - **Dynamic catalog:** an admin can add new products and the catalog array resizes itself (capacity doubles) when full
 - Sorting by price, stock, or brand
-- **Input validation:** wrong input never crashes or exits the program. It shows an error and asks the same question again
+- **Input validation:** wrong input never crashes the program. It shows an error with the attempts left. **After 3 wrong answers in a row the program goes back to the menu**
 - **Zero memory leaks:** every list, stack, queue, tree and array is freed on exit (checked with AddressSanitizer and LeakSanitizer)
 
 ## Data Structures & Algorithms Used
@@ -33,30 +36,51 @@ A console-based C++ program (CS201 Data Structures & Algorithms final output) th
 | 7 | `lab7_searching` | Linear and binary search | Keyword search, price range filter |
 | 8 | `lab8_sorting` | Quick sort and insertion sort | Sort by price, stock, brand |
 
-Other files: `models.h` (structs), `globals.h/.cpp` (shared pointers), `display.h/.cpp` (table output), `console_color.h/.cpp` (brand colors), `input_utils.h` (safe input functions).
+**Namespaces:** every module has its own namespace, so calls show where they come from (for example `history::restockProduct`, `cart::addToCart`, `globals::cartHead`).
+
+| File | Namespace |
+|---|---|
+| `globals` | `globals` |
+| `lab1_catalog` | `inventory` |
+| `lab2_cart` | `cart` |
+| `lab3_brand_banner` | `banner` |
+| `lab4_undo_stack` | `history` |
+| `lab5_checkout_queue` | `checkout` |
+| `lab6_bst` | `bst` |
+| `lab7_searching` | `searching` |
+| `lab8_sorting` | `sorting` |
+| `display` | `display` |
+| `console_color` | `color` |
+| `terminal` | `term` |
+| `input_utils` | `input` |
+
+`models.h` (the structs) stays in the global namespace. The code uses `using namespace std;`, so there are no `std::` prefixes.
+
+Other files: `models.h` (structs), `globals.h/.cpp` (shared pointers), `display.h/.cpp` (table output), `console_color.h/.cpp` (brand and green colors), `terminal.h/.cpp` (centering, clear screen, single key input), `input_utils.h` (safe input functions).
 
 ## Menu
 
 | # | Option | Notes |
 |---|---|---|
-| 1 | View Complete Catalog | Shows current stock |
-| 2 | Filter by Brand | Not case-sensitive (`sony` works). The brand list comes from the catalog |
-| 3 | Search by Keyword | Linear search, not case-sensitive, matches name, category and brand |
+| 1 | View Complete Catalog | Shows current stock. No Product ID |
+| 2 | Filter by Brand | The brands are shown in a centered table (new brands follow at the bottom). Type just a keyword (`son`, `nin`, `pokemon`), not case-sensitive |
+| 3 | Search by Keyword | Linear search, not case-sensitive. Matches whole words in the name, category and brand, so `2` finds Spider-Man 2 but not Fortnite 2800 |
 | 4 | Filter by Price Range | Binary search, max must be at least min |
-| 5 | Add Item to Shopping Cart | Submenu: add item, view cart, browse cart (Next / Previous) |
-| 6 | Process Customer Checkout Queue | Submenu: place order, process next order, view queue |
-| 7 | Perform Admin Undo Action | Submenu: undo, redo, restock a product, add a new product |
+| 5 | Add Item to Shopping Cart | Submenu: add items (by keyword, with quantity), remove an item, view cart, browse cart (Next / Previous) |
+| 6 | Process Customer Checkout Queue | Submenu: place order (asks the customer name), process next order, view queue (waiting and completed orders) |
+| 7 | Perform Admin Undo Action | Submenu: undo, redo, restock a product, add a new product. Admin tables show the Product ID |
 | 8 | Brand Banner | Circular list of partner brands |
-| 9 | Sort Inventory Display | Price, stock, or brand (display only) |
-| 10 | Exit | Frees all memory, then quits |
+| 9 | Sort Inventory Display | Price, stock, or brand (display only). After a result it returns to the sort menu |
+| 0 | Exit | Frees all memory, then quits |
 
 ## How the Stock Works
 
-1. **Add to cart:** stock goes down by 1 immediately (shown in the catalog table).
-2. **Undo:** the item is removed from the cart and the stock goes back up by 1. Undoing a restock removes the added units.
-3. **Redo:** re-applies the action that was just undone. Any new action clears the redo history.
-4. **Place order (checkout):** the order joins the back of the queue. Stock is not reduced again, and the undo and redo history is cleared because a placed order is final.
-5. An item with 0 stock cannot be added to the cart.
+1. **Add to cart:** stock goes down by the quantity immediately (shown in the catalog table). The same product is kept as one cart line with a quantity.
+2. **Remove from cart:** the units go back to stock.
+3. **Undo:** reverses the latest action: a cart add, a cart removal, a restock, or an added product (the product leaves the catalog and the brand table).
+4. **Redo:** re-applies the action that was just undone. Any new action clears the redo history.
+5. **Place order (checkout):** the order joins the back of the queue. Stock is not reduced again, and the undo and redo history is cleared because a placed order is final.
+6. An item with 0 stock cannot be added to the cart.
 
 ## Input Validation
 
@@ -64,19 +88,22 @@ All input is read as full lines, so mistakes are caught instead of breaking the 
 
 | Prompt | Accepted input |
 |---|---|
-| Menu selection | Whole number 1–10 |
-| Brand | A real catalog brand |
-| Keyword | Any non-empty text |
+| Menu selection | One key press (invalid keys are ignored) |
+| Brand | A keyword that matches a catalog brand |
+| Keyword | Any non-empty text. In the cart, `0` goes back |
+| Quantity | 1 up to the stock left |
+| Cart item number | A number shown in the cart table, or `0` to go back |
+| Customer name | Any non-empty text |
 | Price range | Non-negative numbers, max ≥ min |
-| Product ID | An existing ID, or `0` to cancel |
-| Sort option | 1, 2, or 3 |
+| Product ID (admin only) | An existing ID, or `0` to cancel |
 
-Invalid input (letters, blanks, `5abc`, out-of-range numbers) prints `Invalid input... Try again.` and repeats the same prompt.
+Invalid input (letters, blanks, `5abc`, out-of-range numbers, a keyword that matches nothing) prints an error with the attempts left and repeats the same prompt. **After 3 failed attempts in a row the program shows `Too many invalid attempts` and goes back to the menu.**
 
 ## Requirements
 
-- A C++ compiler with C++11 or newer (g++ from MSYS2/MinGW recommended)
-- **Windows** (brand colors use `windows.h`)
+- A C++ compiler with C++17 (g++ from MSYS2/MinGW recommended on Windows)
+- Windows, Linux or macOS
+- A terminal at least 100 columns wide, so the catalog table does not wrap
 
 ## Build and Run
 
@@ -92,28 +119,26 @@ In PowerShell, run it with `.\blitzshop.exe`.
 If `*.cpp` does not work in your terminal, list the files instead:
 
 ```
-g++ -std=c++17 main.cpp console_color.cpp display.cpp globals.cpp lab1_catalog.cpp lab2_cart.cpp lab3_brand_banner.cpp lab4_undo_stack.cpp lab5_checkout_queue.cpp lab6_bst.cpp lab7_searching.cpp lab8_sorting.cpp -o blitzshop
+g++ -std=c++17 main.cpp console_color.cpp display.cpp globals.cpp terminal.cpp lab1_catalog.cpp lab2_cart.cpp lab3_brand_banner.cpp lab4_undo_stack.cpp lab5_checkout_queue.cpp lab6_bst.cpp lab7_searching.cpp lab8_sorting.cpp -o blitzshop
 ```
 
 ## Limitations (Downsides)
 
 - **Nothing is saved.** The catalog is hard-coded, so stock, carts, orders and added products reset every time the program restarts. A file or database would be needed for permanent data.
-- **Windows only.** Brand colors use `windows.h`, so the program does not compile on Linux or macOS without changes.
 - **Console interface only.** There is no GUI.
 - **Stock is reserved as soon as an item is added.** An abandoned cart keeps its items out of stock until the program closes. A real store would release them after a timeout.
-- **No quantity per item.** Adding the same product twice creates two cart entries, and Undo removes only the most recent addition (LIFO), not an item from the middle.
-- **Placing an order clears the undo and redo history**, including earlier restocks.
+- **Placing an order clears the undo and redo history**, including earlier restocks and added products.
+- **An added product can only be undone while it is the newest product** (Undo goes in LIFO order).
 - **Added brands have no custom color.** A new brand shows in the default console color.
-- **Sorting is display-only.** Option 9 sorts a copy, so the catalog table always goes back to ID order.
-- **No payment, customer accounts, or editing and deleting products.**
+- **Sorting is display-only.** Option 9 sorts a copy, so the catalog table always goes back to its original order.
+- **No payment, customer accounts, or editing and deleting products.** The customer name is only a label on the order.
 
 ## Possible Improvements
 
 - Save and load the catalog from a file
-- Add quantity per cart item and remove-any-item
+- Let the customer choose the row color used for sorting (for example by brand or by category)
 - Release reserved stock from abandoned carts after a timeout
 - Let an admin edit and delete products
-- Make the program portable beyond Windows
 
 ## Sample Catalog
 

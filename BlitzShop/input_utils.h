@@ -1,6 +1,8 @@
 #pragma once
 // Safe console input helpers. Header-only, so no extra .cpp needs to be compiled.
-// Every function keeps asking the SAME question until the answer is valid.
+// Every function keeps asking the SAME question until the answer is valid, but after
+// MAX_ATTEMPTS wrong answers in a row it throws TooManyAttempts. The menus catch it
+// and go back to the menu.
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -9,72 +11,107 @@
 #include <climits>
 #include "terminal.h"
 
-inline bool readRawLine(std::string& out) {
-    if (!std::getline(std::cin, out)) {
+using namespace std;
+
+namespace input {
+
+const int MAX_ATTEMPTS = 3;
+
+struct TooManyAttempts {};
+
+// Call after a wrong answer: prints the message with the attempts left, or throws on the last one.
+inline void invalidEntry(const string& message, int& attempts) {
+    attempts++;
+    if (attempts >= MAX_ATTEMPTS) throw TooManyAttempts();
+    int left = MAX_ATTEMPTS - attempts;
+    cout << message << " (" << left << (left == 1 ? " attempt" : " attempts") << " left)\n";
+}
+
+inline bool readRawLine(string& out) {
+    if (!getline(cin, out)) {
         // Input stream closed (Ctrl+Z / Ctrl+D): quit instead of looping forever
-        std::cout << "\nInput closed. Exiting program.\n";
-        std::exit(0);
+        cout << "\nInput closed. Exiting program.\n";
+        term::shutdown();
+        exit(0);
     }
-    term::lineStartReset();   // the Enter key was echoed by the terminal, so the next output needs its margin again
+    term::lineStartReset();   // the user pressed Enter, so the cursor is at the start of a line
     return true;
 }
 
-inline std::string trimText(const std::string& s) {
+inline string trimText(const string& s) {
     size_t a = 0, b = s.size();
-    while (a < b && std::isspace((unsigned char)s[a])) a++;
-    while (b > a && std::isspace((unsigned char)s[b - 1])) b--;
+    while (a < b && isspace((unsigned char)s[a])) a++;
+    while (b > a && isspace((unsigned char)s[b - 1])) b--;
     return s.substr(a, b - a);
 }
 
 // Whole number between minVal and maxVal (inclusive). Rejects letters, "5abc", "3.5", blanks.
-inline int readInt(const std::string& prompt, int minVal = INT_MIN, int maxVal = INT_MAX) {
+// `attempts` can be shared by several questions that count as one try (see askForProduct).
+inline int readInt(const string& prompt, int minVal, int maxVal, int& attempts) {
     while (true) {
-        std::cout << prompt;
-        std::string line;
+        cout << prompt;
+        string line;
         readRawLine(line);
         line = trimText(line);
 
         char* end = nullptr;
         errno = 0;
-        long v = std::strtol(line.c_str(), &end, 10);
+        long v = strtol(line.c_str(), &end, 10);
         bool ok = !line.empty() && *end == '\0' && errno == 0 && v >= minVal && v <= maxVal;
         if (ok) return (int)v;
 
         if (minVal != INT_MIN && maxVal != INT_MAX)
-            std::cout << "Invalid input. Please enter a whole number from " << minVal << " to " << maxVal << ". Try again.\n";
+            invalidEntry("Invalid input. Please enter a whole number from " + to_string(minVal) + " to " + to_string(maxVal) + ". Try again.", attempts);
         else
-            std::cout << "Invalid input. Please enter a whole number. Try again.\n";
+            invalidEntry("Invalid input. Please enter a whole number. Try again.", attempts);
     }
 }
 
+inline int readInt(const string& prompt, int minVal = INT_MIN, int maxVal = INT_MAX) {
+    int attempts = 0;
+    return readInt(prompt, minVal, maxVal, attempts);
+}
+
 // Decimal number >= minVal. Rejects letters, "12abc", blanks, nan/inf.
-inline double readDouble(const std::string& prompt, double minVal = 0.0) {
+inline double readDouble(const string& prompt, double minVal, int& attempts) {
     while (true) {
-        std::cout << prompt;
-        std::string line;
+        cout << prompt;
+        string line;
         readRawLine(line);
         line = trimText(line);
 
         char* end = nullptr;
         errno = 0;
-        double v = std::strtod(line.c_str(), &end);
+        double v = strtod(line.c_str(), &end);
         bool isNumber = !line.empty() && *end == '\0' && errno == 0 &&
-                        (std::isdigit((unsigned char)line.back()) || line.back() == '.') &&
-                        line.find_first_of("nNiI") == std::string::npos;
+                        (isdigit((unsigned char)line.back()) || line.back() == '.') &&
+                        line.find_first_of("nNiI") == string::npos;
         if (isNumber && v >= minVal) return v;
 
-        std::cout << "Invalid input. Please enter a valid number (" << minVal << " or higher). Try again.\n";
+        invalidEntry("Invalid input. Please enter a valid number (" + to_string((long long)minVal) + " or higher). Try again.", attempts);
     }
+}
+
+inline double readDouble(const string& prompt, double minVal = 0.0) {
+    int attempts = 0;
+    return readDouble(prompt, minVal, attempts);
 }
 
 // Non-empty text (spaces allowed, e.g. "The Pokemon Company").
-inline std::string readText(const std::string& prompt) {
+inline string readText(const string& prompt, int& attempts) {
     while (true) {
-        std::cout << prompt;
-        std::string line;
+        cout << prompt;
+        string line;
         readRawLine(line);
         line = trimText(line);
         if (!line.empty()) return line;
-        std::cout << "Invalid input. This cannot be empty. Try again.\n";
+        invalidEntry("Invalid input. This cannot be empty. Try again.", attempts);
     }
 }
+
+inline string readText(const string& prompt) {
+    int attempts = 0;
+    return readText(prompt, attempts);
+}
+
+}  // namespace input

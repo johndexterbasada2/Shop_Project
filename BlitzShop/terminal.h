@@ -3,6 +3,8 @@
 // Works on Windows (windows.h / conio.h) and on Linux/macOS (ANSI + termios).
 #include <string>
 
+using namespace std;
+
 namespace term {
 
 enum Color { DEFAULT = 0, BLUE, GREEN, RED, YELLOW, CYAN, MAGENTA };
@@ -18,7 +20,10 @@ void shutdown();
 void newScreen(int blockWidth);
 
 // Pads a heading so it sits in the middle of the current block (block mode only).
-std::string centered(const std::string& text);
+string centered(const string& text);
+
+// Number of spaces that center a text of this width in the current block.
+int centerPad(int textWidth);
 
 // Call after the user pressed Enter, so the next line gets its margin again.
 void lineStartReset();
@@ -28,7 +33,7 @@ int readKey();
 
 // Prints the prompt and waits until the user presses one of the keys in `valid`
 // (lowercase letters/digits). Returns that key in lowercase. Wrong keys are ignored.
-char menuKey(const std::string& prompt, const std::string& valid);
+char menuKey(const string& prompt, const string& valid);
 
 // "Press any key to continue..."
 void pause();

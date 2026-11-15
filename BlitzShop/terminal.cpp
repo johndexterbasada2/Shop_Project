@@ -10,6 +10,8 @@
 #include <streambuf>
 #include <string>
 
+using namespace std;
+
 #ifdef _WIN32
   #ifndef NOMINMAX
   #define NOMINMAX
@@ -55,7 +57,7 @@ int terminalWidth() {
 }
 
 // Counts the characters the user will actually see (skips color markers and UTF-8 tails)
-int visibleLength(const std::string& s) {
+int visibleLength(const string& s) {
     int n = 0;
     for (size_t i = 0; i < s.size(); i++) {
         unsigned char c = (unsigned char)s[i];
@@ -68,9 +70,9 @@ int visibleLength(const std::string& s) {
 
 // Sits between cout and the real output. It holds one line at a time, adds the
 // left margin, and applies color changes in the right order.
-class CenterBuf : public std::streambuf {
+class CenterBuf : public streambuf {
 public:
-    explicit CenterBuf(std::streambuf* real) : real_(real) {}
+    explicit CenterBuf(streambuf* real) : real_(real) {}
 
     bool lineMode = false;
     int blockMargin = 0;
@@ -82,21 +84,21 @@ public:
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), kWinColor[id]);
 #else
         char code[16];
-        std::snprintf(code, sizeof code, "\033[%dm", kAnsiColor[id]);
-        real_->sputn(code, (std::streamsize)std::strlen(code));
+        snprintf(code, sizeof code, "\033[%dm", kAnsiColor[id]);
+        real_->sputn(code, (streamsize)strlen(code));
 #endif
     }
 
-    void rawWrite(const char* text) { real_->sputn(text, (std::streamsize)std::strlen(text)); }
+    void rawWrite(const char* text) { real_->sputn(text, (streamsize)strlen(text)); }
     void rawSync() { real_->pubsync(); }
 
     void emit() {
         if (pending_.empty()) return;
         int visible = visibleLength(pending_);
         if (visible > 0 && !started) {
-            int margin = lineMode ? std::max(0, (terminalWidth() - visible) / 2) : blockMargin;
-            std::string spaces((size_t)margin, ' ');
-            real_->sputn(spaces.data(), (std::streamsize)spaces.size());
+            int margin = lineMode ? max(0, (terminalWidth() - visible) / 2) : blockMargin;
+            string spaces((size_t)margin, ' ');
+            real_->sputn(spaces.data(), (streamsize)spaces.size());
             started = true;
         }
         for (size_t i = 0; i < pending_.size(); i++) {
@@ -130,12 +132,12 @@ protected:
     }
 
 private:
-    std::streambuf* real_;
-    std::string pending_;
+    streambuf* real_;
+    string pending_;
 };
 
 CenterBuf* g_buf = nullptr;
-std::streambuf* g_original = nullptr;
+streambuf* g_original = nullptr;
 int g_blockWidth = 0;
 
 #ifndef _WIN32
@@ -149,13 +151,13 @@ void onInterrupt(int) {
 #endif
 
 [[noreturn]] void inputClosed() {
-    std::cout << "\nInput closed. Exiting program.\n";
+    cout << "\nInput closed. Exiting program.\n";
     shutdown();
-    std::exit(0);
+    exit(0);
 }
 
 void clearTerminal() {
-    std::cout.flush();
+    cout.flush();
 #ifdef _WIN32
     if (g_vtEnabled) {
         g_buf->rawWrite("\033[2J\033[3J\033[H");
@@ -188,17 +190,17 @@ void init() {
 #else
     signal(SIGINT, onInterrupt);
 #endif
-    g_original = std::cout.rdbuf();
+    g_original = cout.rdbuf();
     g_buf = new CenterBuf(g_original);
-    std::cout.rdbuf(g_buf);
+    cout.rdbuf(g_buf);
 }
 
 void shutdown() {
     if (!g_buf) return;
-    std::cout.flush();
+    cout.flush();
     g_buf->applyColor(DEFAULT);
     g_buf->rawSync();
-    std::cout.rdbuf(g_original);
+    cout.rdbuf(g_original);
     delete g_buf;
     g_buf = nullptr;
 }
@@ -208,14 +210,17 @@ void newScreen(int blockWidth) {
     clearTerminal();
     g_blockWidth = blockWidth;
     g_buf->lineMode = (blockWidth <= 0);
-    g_buf->blockMargin = std::max(0, (terminalWidth() - blockWidth) / 2);
+    g_buf->blockMargin = max(0, (terminalWidth() - blockWidth) / 2);
     g_buf->started = false;
 }
 
-std::string centered(const std::string& text) {
-    if (g_blockWidth <= 0) return text;
-    int pad = std::max(0, (g_blockWidth - (int)text.size()) / 2);
-    return std::string((size_t)pad, ' ') + text;
+int centerPad(int textWidth) {
+    if (g_blockWidth <= 0) return 0;
+    return max(0, (g_blockWidth - textWidth) / 2);
+}
+
+string centered(const string& text) {
+    return string((size_t)centerPad((int)text.size()), ' ') + text;
 }
 
 void lineStartReset() {
@@ -223,19 +228,19 @@ void lineStartReset() {
 }
 
 void setColor(Color c) {
-    if (g_buf) std::cout << kColorMarker << (char)('0' + (int)c);
+    if (g_buf) cout << kColorMarker << (char)('0' + (int)c);
 }
 
 int readKey() {
-    std::cout.flush();   // make sure the prompt is on screen first
+    cout.flush();   // make sure the prompt is on screen first
 #ifdef _WIN32
     int c = _getch();
     if (c == 0 || c == 0xE0) { _getch(); return 0; }   // arrow / function key
-    if (c == 3) { std::cout << "\n"; shutdown(); std::exit(0); }   // Ctrl+C
+    if (c == 3) { cout << "\n"; shutdown(); exit(0); }   // Ctrl+C
     return c;
 #else
     if (!isatty(STDIN_FILENO)) {
-        int c = std::getchar();
+        int c = getchar();
         if (c == EOF) inputClosed();
         return c;
     }
@@ -268,18 +273,18 @@ int readKey() {
 #endif
 }
 
-char menuKey(const std::string& prompt, const std::string& valid) {
-    std::cout << prompt << std::flush;
+char menuKey(const string& prompt, const string& valid) {
+    cout << prompt << flush;
     while (true) {
         int c = readKey();
         if (c <= 0 || c > 255) continue;
-        char lower = (char)std::tolower(c);
-        if (valid.find(lower) != std::string::npos) return lower;
+        char lower = (char)tolower(c);
+        if (valid.find(lower) != string::npos) return lower;
     }
 }
 
 void pause() {
-    std::cout << "\nPress any key to continue..." << std::flush;
+    cout << "\nPress any key to continue..." << flush;
     readKey();
 }
 

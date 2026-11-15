@@ -3,7 +3,14 @@
 #include <string>
 #include "models.h"
 
+using namespace std;
+
+namespace banner {
+
 void initBrandBanner(Product* catalog, int size);   // (re)builds the list from the catalog's brands
 void showBrandBanner();
-std::string brandListText();                        // "Sony, Microsoft, ..." read from the list
+void showBrandTable();                              // boxed, centered table of every brand (new brands follow)
+string brandListText();                        // "Sony, Microsoft, ..." read from the list
 void destroyBrandBanner();                          // frees every node
+
+}  // namespace banner

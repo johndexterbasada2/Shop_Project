@@ -1,46 +1,60 @@
 #pragma once
 #include <string>
 
+using namespace std;
+
 // ---------- Data models used across the whole project ----------
 
 struct Product {
     int id;
-    std::string name;
-    std::string category;
-    std::string brand;
+    string name;
+    string category;
+    string brand;
     double price;
     int stockQuantity;
 };
 
-// Doubly linked list node (shopping cart)
+// Doubly linked list node (shopping cart). One node per product, with a quantity.
 struct CartNode {
     Product* product;
+    int quantity;
     CartNode* prev;
     CartNode* next;
 };
 
 // Circular singly linked list node (partner brand banner)
 struct BrandNode {
-    std::string brandName;
+    string brandName;
     BrandNode* next;
 };
 
 // What kind of action an undo/redo stack entry records
-enum ActionType { ACTION_CART_ADD, ACTION_RESTOCK };
+enum ActionType { ACTION_CART_ADD, ACTION_CART_REMOVE, ACTION_RESTOCK, ACTION_ADD_PRODUCT };
 
 // Stack node (admin undo / redo, LIFO)
 struct StackNode {
     ActionType type;
     Product* product;
-    int amount;          // units added to cart (1) or restocked
+    int amount;          // units added to / removed from the cart, or restocked
+    Product item;        // copy of the product (only used by ACTION_ADD_PRODUCT, so redo can add it back)
     StackNode* next;
 };
 
 // Queue node (checkout orders, FIFO)
 struct QueueNode {
     int orderNo;
+    string customer;
     CartNode* cartHead;
     QueueNode* next;
+};
+
+// Finished order, kept so earlier customers still show up in the queue screen
+struct DoneNode {
+    int orderNo;
+    string customer;
+    int units;
+    double total;
+    DoneNode* next;
 };
 
 // Binary search tree node (product lookup by ID)

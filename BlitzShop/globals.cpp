@@ -1,5 +1,7 @@
 #include "globals.h"
 
+namespace globals {
+
 CartNode*  cartHead = nullptr;
 CartNode*  cartTail = nullptr;
 BrandNode* bannerHead = nullptr;
@@ -8,3 +10,5 @@ StackNode* redoStackHead = nullptr;
 QueueNode* checkoutQueueHead = nullptr;
 QueueNode* checkoutQueueTail = nullptr;
 BSTNode*   bstRoot = nullptr;
+
+}  // namespace globals
